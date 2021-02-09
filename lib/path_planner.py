@@ -8,6 +8,7 @@ import warnings
 import math
 from itertools import groupby
 from operator import itemgetter
+import numpy as np
 
 # PolarHistogram class creates an object to represent the Polar Histogram
 
@@ -114,41 +115,59 @@ class PathPlanner:
         return self.histogram_grid.get_obstacles()
 
     def get_best_angle(self, robot_to_target_angle):
+        robot_to_target_angle = np.rad2deg(robot_to_target_angle)
+        print(robot_to_target_angle)
         sectors = self.get_sectors()
         num_bins = self.polar_histogram.num_bins
+        bin_width = self.polar_histogram.bin_width
+        half_s_max_angle = self.s_max*bin_width/2
         if len(sectors) == 0:
-            least_likely_bin = sorted(range(len(self.polar_histogram._polar_histogram)),
-                                      key=lambda k: self.polar_histogram._polar_histogram[k])[0]
-            middle_angle = self.polar_histogram.get_middle_angle_of_bin(
-                least_likely_bin)
-            warnings.warn("path_planner: the entire polar histogram is above valley threshold = %s, setting best angle to least likely bin middle angle = %s" % (
-                self.valley_threshold, middle_angle))
+            least_likely_bin = min(range(num_bins), key=lambda k: self.polar_histogram.get(k))
+            middle_angle = self.polar_histogram.get_middle_angle_of_bin(least_likely_bin)
+            warnings.warn("path_planner: the entire polar histogram is above valley threshold = %s, setting \
+                best angle to least likely bin middle angle = %s" % (self.valley_threshold, middle_angle))
             return middle_angle
 
         angles = []
-        for sector in sectors:
-            # counterclockwise from ang1, you'll hit middle_angle, then ang2
-            print(sector)
-            if sector[0] > sector[1]:
-                sector = (sector[0], sector[1] + num_bins)
-            sector_width = (sector[1] - sector[0]) + 1
-            print(sector_width, self.s_max)
+        for bin_r, bin_l in sectors:
+            # counterclockwise from bin_r, you'll hit middle_angle, then bin_l
+            print("Edge bins", bin_r, bin_l)
+            if bin_r > bin_l:
+                bin_l += num_bins
+            sector_diff = bin_l - bin_r
+            print(sector_diff, self.s_max)
+            # edge case: if all bins are available, move toward target
+            if sector_diff >= num_bins - 1:
+                return robot_to_target_angle
 
-            if sector_width > self.s_max:
+            s_l = (bin_l + 0.5) * bin_width
+            s_r = (bin_r + 0.5) * bin_width
+            print(s_l, s_r)
+
+            if sector_diff > self.s_max:
                 # Case 1: Wide valley. Include only s_max bins.
-                k1, k2 = sector[0] + sector_width/
-
+                padded_s_l = s_l - half_s_max_angle
+                padded_s_r = s_r + half_s_max_angle
+                angles.append(padded_s_l)
+                angles.append(padded_s_r)
+                print("Padded:", padded_s_l, padded_s_r)
+                # determine if robot_to_target_angle is between the two
+                while padded_s_l > robot_to_target_angle and padded_s_r > robot_to_target_angle:
+                    padded_s_l -= 360
+                    padded_s_r -= 360
+                while padded_s_l < robot_to_target_angle and padded_s_r < robot_to_target_angle:
+                    padded_s_l += 360
+                    padded_s_r += 360
+                if padded_s_l > robot_to_target_angle > padded_s_r:
+                    angles.append(robot_to_target_angle)
             else:
                 # Case 2: Narrow valley. Include all bins.
-                ang1 = self.polar_histogram.get_middle_angle_of_bin(sector[0])
-                ang2 = self.polar_histogram.get_middle_angle_of_bin(sector[1])
-                print(ang1, ang2)
-                middle_angle = ang1 + (ang2-ang1) / 2
+                middle_angle = s_l + (s_r-s_l) / 2
                 angles.append(middle_angle)
 
         print([(a, abs(robot_to_target_angle - a)) for a in angles])
 
-        result = min(angles, key=lambda ang: abs(robot_to_target_angle - ang))
+        result = min(angles, key=lambda ang: abs(robot_to_target_angle % 360 - ang % 360))
         print(result)
         return result
 
