@@ -5,7 +5,7 @@ import math
 
 
 class HistogramGrid:
-    def __init__(self, dimension, resolution, robot_location, active_region_dimension):
+    def __init__(self, dimension, resolution, active_region_dimension):
         """
         dimension: Number of cells.
         resolution: Size of the cell in centimeters.
@@ -20,7 +20,7 @@ class HistogramGrid:
         self.active_region_dimension = active_region_dimension
 
     @classmethod
-    def from_map(cls, map_fname, active_region_dimension, resolution, robot_location):
+    def from_map(cls, map_fname, active_region_dimension, resolution):
         """
         Args:
             active_region_dimension: a tuple (x, y).
@@ -34,8 +34,7 @@ class HistogramGrid:
         # print("histogram_grid: histogram =")
         # print(*lines, sep="\n")
         dimension = (len(lines[0]), len(lines))
-        hg = cls(dimension, resolution, robot_location,
-                 active_region_dimension)
+        hg = cls(dimension, resolution, active_region_dimension)
         hg.histogram_grid = lines
         return hg
 

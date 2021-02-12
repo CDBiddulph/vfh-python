@@ -1,5 +1,6 @@
 import math
 import queue
+from path_planner import PathPlanner
 
 # Used for the simulation
 SMALL_DISTANCE = 0.01
@@ -25,6 +26,9 @@ class Bike:
         self.MAX_ACCEL = 0.3
         self.CURVE_CONST = 3
         self.YAW_ADJUST_SPEED = 50
+
+        robot_loc = (0, 0)
+        self.path_planner = PathPlanner()
 
     def step(self, speed, yaw_dot):
         """Perform one simulation step of the bike"""
