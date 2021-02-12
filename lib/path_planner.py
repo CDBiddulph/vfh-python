@@ -90,9 +90,11 @@ class PathPlanner:
         filtered_polar_histogram = self.get_filtered_polar_histogram()
         num_bins = self.polar_histogram.num_bins
         # return early if every sector is under or over the threshold
+        print(len(filtered_polar_histogram))
+        print(num_bins)
         if num_bins == len(filtered_polar_histogram):
             return [(0, num_bins - 1)]
-        elif num_bins == 0:
+        elif len(filtered_polar_histogram) == 0:
             return []
         sectors = []
         last_bin = start_bin = filtered_polar_histogram[0]
