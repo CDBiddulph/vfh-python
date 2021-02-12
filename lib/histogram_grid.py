@@ -98,7 +98,7 @@ class HistogramGrid:
         y_del = discrete_end[1] - discrete_start[1]
         x_del = discrete_end[0] - discrete_start[0]
         angle = np.arctan2(y_del, x_del)
-        return np.rad2deg(angle % (2 * np.pi))
+        return angle % (2 * np.pi)  # TODO: this messed smoething up somehow
         # delta_x, delta_y = discrete_displacement
         # # print("histogram_grid: (delta_x, delta_y) =", discrete_displacement)
         #

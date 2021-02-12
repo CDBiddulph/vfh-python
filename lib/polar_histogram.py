@@ -2,7 +2,7 @@
 polar_histogram.py
 
 A polar histogram means this, assuming bin_width=36
-(therefore num_bins = 360 / 36 = 10):
+(therefore num_bins = 2*math.pi / 36 = 10):
 
 
 index, corresponding_angle, histogram_angle
@@ -18,6 +18,7 @@ However, we only keep index in a flat array for histograms, so we don't natively
 but instead translate to and from angle.
 """
 # PolarHistogram class creates an object to represent the Polar Histogram
+import math
 
 
 class PolarHistogram:
@@ -31,7 +32,7 @@ class PolarHistogram:
             histogram: Array storing the values of the polar histogram.
         """
         self.num_bins = num_bins
-        self.bin_width = 360/num_bins
+        self.bin_width = 2*math.pi/num_bins
         self._polar_histogram = [0] * num_bins
 
     def wrap(self, bin_index):
@@ -59,9 +60,9 @@ class PolarHistogram:
     def get_bin_index_from_angle(self, angle):
         """Returns index 0 <= i < nBins that corresponds to a. "Wraps" a around histogram."""
         while angle < 0:
-            angle += 360
-        while angle > 360:
-            angle -= 360
+            angle += 2*math.pi
+        while angle > 2*math.pi:
+            angle -= 2*math.pi
 
         return int(angle // self.bin_width)
 
@@ -93,8 +94,7 @@ class PolarHistogram:
     def __str__(self):
         string = 'index, angle, certainty\n'
         for i, certainty in enumerate(self._polar_histogram):
-            string += str(i) + ' ' + str(i * self.bin_width) + \
-                ' ' + str(certainty) + '\n'
+            string += " ".join(str(i), str(i * self.bin_width), str(certainty)) + '\n'
         return string
 
     def get_angle_certainty(self):

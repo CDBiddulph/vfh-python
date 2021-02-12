@@ -23,8 +23,7 @@ from .polar_histogram import PolarHistogram
 class Robot:
     def __init__(self, histogram_grid, polar_histogram, init_location, target_location, init_speed):
         # CHANGED: we shouldn't need polar_histogram, only histogram_grid
-        self.path_planner = PathPlanner(
-            histogram_grid, polar_histogram, init_location, target_location)
+        self.path_planner = PathPlanner(histogram_grid, polar_histogram, init_location, target_location)
         self.target_location = target_location
         self.location = init_location
         self.speed = init_speed
@@ -38,25 +37,20 @@ class Robot:
         return cls(histogram_grid, polar_histogram, init_location, target_location, init_speed)
 
     def update_angle(self):
-        continuous_displacement = (
-            self.target_location[0] - self.location[0], self.target_location[1] - self.location[1])
-        continuous_robot_to_target_angle = math.atan2(
-            continuous_displacement[1], continuous_displacement[0])
-        self.angle = self.path_planner.get_best_angle(
-            continuous_robot_to_target_angle)
-        self.continuous_robot_to_target_angle = continuous_robot_to_target_angle
+        continuous_displacement = (self.target_location[0] - self.location[0],
+                                   self.target_location[1] - self.location[1])
+        self.robot_to_target_angle = math.atan2(continuous_displacement[1], continuous_displacement[0])
+        self.move_angle = self.path_planner.get_best_angle(self.robot_to_target_angle)
 
     def set_speed(self, speed):
         self.speed = speed
 
     def update_velocity(self):
-        angle_radian = self.angle * math.pi/180
         # old_v_x, old_v_y = self.velocity
-        self.velocity = (self.speed * math.cos(angle_radian),
-                         self.speed * math.sin(angle_radian))
+        self.velocity = (self.speed * math.cos(self.move_angle),
+                         self.speed * math.sin(self.move_angle))
 
     def update_location(self):
-        angle_radian = self.angle * math.pi/180
         velocity_x, velocity_y = self.velocity
 
         old_x, old_y = self.location
@@ -73,7 +67,7 @@ class Robot:
         # self.print_histogram()
         self.update_angle()  # angle: Null (or optionally, t-1) => t
         # self.set_speed() # speed: Null (or optionally, t-1) => t
-        # print("robot: step: best angle =", self.angle )
+        # print("robot: step: best angle =", self.move_angle )
         self.update_velocity()
         self.update_location()  # position: t => t+1
 
@@ -114,7 +108,7 @@ class Robot:
                                certainty in polar_histogram_by_angle]
             colors = ['blue' if certainty < valley_threshold else 'red' for angle,
                       certainty in polar_histogram_by_angle]
-            labels = [angle for angle, certainty in polar_histogram_by_angle]
+            labels = [round(np.rad2deg(angle)) for angle, certainty in polar_histogram_by_angle]
             generator = enumerate(polar_histogram_by_angle)
 
             def make_autopct(bin_percentages):
@@ -165,8 +159,7 @@ class Robot:
                                    certainty in polar_histogram_by_angle]
                 colors = ['blue' if certainty < valley_threshold else 'red' for angle,
                           certainty in polar_histogram_by_angle]
-                labels = [angle for angle,
-                          certainty in polar_histogram_by_angle]
+                labels = [round(np.rad2deg(angle)) for angle, certainty in polar_histogram_by_angle]
                 generator = enumerate(polar_histogram_by_angle)
 
                 def make_autopct(bin_percentages):

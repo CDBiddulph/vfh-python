@@ -115,8 +115,6 @@ class PathPlanner:
         return self.histogram_grid.get_obstacles()
 
     def get_best_angle(self, robot_to_target_angle):
-        robot_to_target_angle = np.rad2deg(robot_to_target_angle)
-        print(robot_to_target_angle)
         sectors = self.get_sectors()
         num_bins = self.polar_histogram.num_bins
         bin_width = self.polar_histogram.bin_width
@@ -131,18 +129,15 @@ class PathPlanner:
         angles = []
         for bin_r, bin_l in sectors:
             # counterclockwise from bin_r, you'll hit middle_angle, then bin_l
-            print("Edge bins", bin_r, bin_l)
             if bin_r > bin_l:
                 bin_l += num_bins
             sector_diff = bin_l - bin_r
-            print(sector_diff, self.s_max)
             # edge case: if all bins are available, move toward target
             if sector_diff >= num_bins - 1:
                 return robot_to_target_angle
 
             s_l = (bin_l + 0.5) * bin_width
             s_r = (bin_r + 0.5) * bin_width
-            print(s_l, s_r)
 
             if sector_diff > self.s_max:
                 # Case 1: Wide valley. Include only s_max bins.
@@ -150,14 +145,13 @@ class PathPlanner:
                 padded_s_r = s_r + half_s_max_angle
                 angles.append(padded_s_l)
                 angles.append(padded_s_r)
-                print("Padded:", padded_s_l, padded_s_r)
                 # determine if robot_to_target_angle is between the two
                 while padded_s_l > robot_to_target_angle and padded_s_r > robot_to_target_angle:
-                    padded_s_l -= 360
-                    padded_s_r -= 360
+                    padded_s_l -= 2*math.pi
+                    padded_s_r -= 2*math.pi
                 while padded_s_l < robot_to_target_angle and padded_s_r < robot_to_target_angle:
-                    padded_s_l += 360
-                    padded_s_r += 360
+                    padded_s_l += 2*math.pi
+                    padded_s_r += 2*math.pi
                 if padded_s_l > robot_to_target_angle > padded_s_r:
                     angles.append(robot_to_target_angle)
             else:
@@ -165,10 +159,10 @@ class PathPlanner:
                 middle_angle = s_l + (s_r-s_l) / 2
                 angles.append(middle_angle)
 
-        print([(a, abs(robot_to_target_angle - a)) for a in angles])
-
-        result = min(angles, key=lambda ang: abs(robot_to_target_angle % 360 - ang % 360))
-        print(result)
+        print([(np.rad2deg(a), a) for a in angles])
+        print(np.rad2deg(robot_to_target_angle), robot_to_target_angle)
+        result = min(angles, key=lambda ang: abs(robot_to_target_angle % (2*math.pi) - ang % (2*math.pi)))
+        print(np.rad2deg(result))
         return result
 
     def print_histogram(self):
