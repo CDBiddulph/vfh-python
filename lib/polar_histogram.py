@@ -103,3 +103,34 @@ class PolarHistogram:
 
     def reset(self):
         self._polar_histogram = [0] * self.num_bins
+
+    def get_filtered(self, valley_threshold):
+        filtered = [bin_index for bin_index, certainty
+                    in enumerate(self._polar_histogram)
+                    if certainty < valley_threshold]
+        return filtered
+
+    def get_sectors(self, valley_threshold):
+        filtered_polar_histogram = self.get_filtered(valley_threshold)
+        num_bins = self.num_bins
+        # return early if every sector is under or over the threshold
+        if num_bins == len(filtered_polar_histogram):
+            return [(0, num_bins - 1)]
+        elif len(filtered_polar_histogram) == 0:
+            return []
+        sectors = []
+        last_bin = start_bin = filtered_polar_histogram[0]
+
+        for bin in filtered_polar_histogram[1:]:
+            # if a new bin is starting
+            if last_bin + 1 != bin:
+                sectors.append((start_bin, last_bin))
+                start_bin = bin
+            last_bin = bin
+
+        if last_bin == num_bins - 1 and sectors and sectors[0][0] == 0:
+            sectors[0] = (start_bin, sectors[0][1])
+        else:
+            sectors.append((start_bin, last_bin))
+
+        return sectors

@@ -10,8 +10,6 @@ from itertools import groupby
 from operator import itemgetter
 import numpy as np
 
-# PolarHistogram class creates an object to represent the Polar Histogram
-
 
 class PathPlanner:
     def __init__(self, histogram_grid, polar_histogram, robot_location, target_location, a=200, b=1, l=5,
@@ -76,48 +74,8 @@ class PathPlanner:
 
         polar_histogram.smooth_histogram(self.l)
 
-    # TODO: We need to reorganize the polar histogram, starting NOT with the
-    # target angle but with first bin closest to the target angle which does
-    # not have a certainty (due to distance) and ending at max length.
-
-    def get_filtered_polar_histogram(self):
-        filtered = [bin_index for bin_index, certainty
-                    in enumerate(self.polar_histogram._polar_histogram)
-                    if certainty < self.valley_threshold]
-        return filtered
-
-    def get_sectors(self):
-        filtered_polar_histogram = self.get_filtered_polar_histogram()
-        num_bins = self.polar_histogram.num_bins
-        # return early if every sector is under or over the threshold
-        print(len(filtered_polar_histogram))
-        print(num_bins)
-        if num_bins == len(filtered_polar_histogram):
-            return [(0, num_bins - 1)]
-        elif len(filtered_polar_histogram) == 0:
-            return []
-        sectors = []
-        last_bin = start_bin = filtered_polar_histogram[0]
-
-        for bin in filtered_polar_histogram[1:]:
-            # if a new bin is starting
-            if last_bin + 1 != bin:
-                sectors.append((start_bin, last_bin))
-                start_bin = bin
-            last_bin = bin
-
-        if last_bin == num_bins - 1 and sectors and sectors[0][0] == 0:
-            sectors[0] = (start_bin, sectors[0][1])
-        else:
-            sectors.append((start_bin, last_bin))
-
-        return sectors
-
-    def get_obstacles(self):
-        return self.histogram_grid.get_obstacles()
-
     def get_best_angle(self, robot_to_target_angle):
-        sectors = self.get_sectors()
+        sectors = self.polar_histogram.get_sectors(self.valley_threshold)
         num_bins = self.polar_histogram.num_bins
         bin_width = self.polar_histogram.bin_width
         half_s_max_angle = self.s_max*bin_width/2
@@ -161,10 +119,7 @@ class PathPlanner:
                 middle_angle = s_l + (s_r-s_l) / 2
                 angles.append(middle_angle)
 
-        print([(np.rad2deg(a), a) for a in angles])
-        print(np.rad2deg(robot_to_target_angle), robot_to_target_angle)
         result = min(angles, key=lambda ang: abs(robot_to_target_angle % (2*math.pi) - ang % (2*math.pi)))
-        print(np.rad2deg(result))
         return result
 
     def print_histogram(self):
