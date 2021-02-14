@@ -2,6 +2,7 @@ import numpy as np
 import csv
 from operator import sub  # for get_distance_between_discrete_points
 import math
+import os
 
 
 class HistogramGrid:

@@ -8,16 +8,14 @@ SMALL_ANGLE = 0.01
 
 
 class Bike:
-    def __init__(self, x, y, heading, goal):
+    def __init__(self, histogram_grid, polar_histogram, start_location, target_location, heading):
         """
         x = starting x-coordinate, in m (+x points to the right)
         y = starting y-coordinate, in m (+y points upwards)
         heading = starting header, in radians (0 is +x axis, increases counterclockwise)
         """
-        self.x = x
-        self.y = y
+        self.x, self.y = start_location
         self.heading = heading
-        self.goal = goal
         self.speed = 0
         self.yaw = 0
         self.step_count = 0
@@ -27,8 +25,7 @@ class Bike:
         self.CURVE_CONST = 3
         self.YAW_ADJUST_SPEED = 50
 
-        robot_loc = (0, 0)
-        self.path_planner = PathPlanner()
+        self.path_planner = PathPlanner(histogram_grid, polar_histogram, start_location, target_location)
 
     def step(self, speed, yaw_dot):
         """Perform one simulation step of the bike"""

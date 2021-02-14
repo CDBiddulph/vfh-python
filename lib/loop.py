@@ -4,6 +4,8 @@ at the bottom of the file"""
 import sys
 import math
 from bike import Bike
+from histogram_grid import HistogramGrid
+from polar_histogram import PolarHistogram
 
 import numpy as np
 
@@ -216,10 +218,12 @@ def find_display_bounds(waypoints):
 
 
 if __name__ == '__main__':
-    STARTING_POS = (0, 0)
+    STARTING_LOC = (0, 0)
     STARTING_HEADING = 0
-    goal = (5, 5)
+    TARGET_LOC = (6, 6)
+    histogram_grid = HistogramGrid.from_map("vfh-python/map.txt", (16, 16), 1)
+    polar_histogram = PolarHistogram(36)
 
-    bike = Bike(*STARTING_POS, STARTING_HEADING, goal)
+    bike = Bike(histogram_grid, polar_histogram, STARTING_LOC, TARGET_LOC, STARTING_HEADING)
 
     get_loop_function()(bike)
