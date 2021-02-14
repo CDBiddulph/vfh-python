@@ -1,4 +1,5 @@
 import math
+import numpy as np
 import queue
 from path_planner import PathPlanner
 
@@ -40,7 +41,9 @@ class Bike:
         """Returns the pair (speed, yaw_dot)"""
         self.speed = self.MAX_SPEED
         # self.update_yaw(self.goal[0], self.goal[1])
-        self.yaw = self.path_planner.get_best_angle(self.pos, self.target_pos) - self.heading
+        best_angle = self.path_planner.get_best_angle(self.pos, self.target_pos)
+        print(np.rad2deg(best_angle))
+        self.yaw = best_angle - self.heading
         self.step_count += 1
         return self.speed, self.yaw
 
@@ -63,6 +66,10 @@ class Bike:
         reverse_x = self.pos[0] + magnitude * math.cos(reverse_heading)
         reverse_y = self.pos[1] + magnitude * math.sin(reverse_heading)
         return reverse_x, reverse_y
+
+    def get_obstacles(self):
+        hg = self.path_planner.histogram_grid
+        return [hg.discrete_point_to_continous_point(p) for p in zip(*hg.get_obstacles())]
 
 
 def get_curvature(x1, y1, x2, y2, x3, y3):

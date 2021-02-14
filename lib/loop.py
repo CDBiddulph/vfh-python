@@ -52,7 +52,7 @@ def loop_matplotlib(bike):
     axes = plt.gca()
 
     # Holds past locations of the bike, for plotting
-    bike_trajectory = [(bike.x, bike.y)]
+    bike_trajectory = [bike.pos]
 
     # We need to keep this around to clear it after path updates
     path_patch = None
@@ -99,11 +99,12 @@ def loop_matplotlib_blitting(bike, blitting=True):
     if hasattr(bike, 'waypoints'):
         axes = plt.axes(**find_display_bounds(bike.waypoints))
     else:
-        axes = plt.axes(xlim=[-10, 10], ylim=[-10, 10])
+        axes = plt.axes(xlim=[-10, 60], ylim=[-10, 60])
 
     # Square aspect ratio for the axes
     axes.set_aspect("equal")
 
+    # Plot paths
     if hasattr(bike, 'paths'):
         paths = bike.paths
 
@@ -111,7 +112,11 @@ def loop_matplotlib_blitting(bike, blitting=True):
         lc = mc.LineCollection(paths, linewidths=2, color="blue")
         axes.add_collection(lc)
 
-    # Paths won't change, so capture them
+    # Plot obstacles
+    for obstacle in bike.get_obstacles():
+        axes.add_artist(Circle(obstacle, radius=0.5))
+
+    # Paths and obstacles won't change, so capture them
     figure.canvas.draw()
 
     background = [figure.canvas.copy_from_bbox(axes.bbox)]
@@ -178,8 +183,8 @@ def loop_matplotlib_blitting(bike, blitting=True):
         axes.draw_artist(bike_polygon)
 
         # Update trajectory and redraw it
-        add_traj_x(bike.x)
-        add_traj_y(bike.y)
+        add_traj_x(bike.pos[0])
+        add_traj_y(bike.pos[1])
         bike_trajectory_polygon.set_xdata(bike_traj_x)
         bike_trajectory_polygon.set_ydata(bike_traj_y)
         axes.draw_artist(bike_trajectory_polygon)
@@ -219,7 +224,7 @@ def find_display_bounds(waypoints):
 if __name__ == '__main__':
     STARTING_LOC = (0, 0)
     STARTING_HEADING = 0
-    TARGET_LOC = (6, 6)
+    TARGET_LOC = (50, 50)
     histogram_grid = HistogramGrid.from_map("vfh-python/map.txt", (16, 16), 1)
     polar_histogram = PolarHistogram(36)
 

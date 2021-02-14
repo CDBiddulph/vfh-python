@@ -1,6 +1,6 @@
 import csv
 import math
-from lib.geom_util import get_discrete_displacement
+from geom_util import get_discrete_displacement
 
 
 class HistogramGrid:
@@ -53,6 +53,12 @@ class HistogramGrid:
         # TODO ERROR HANDLING
         # throw;
         return discrete_x, discrete_y
+
+    def discrete_point_to_continous_point(self, discrete_point):
+        discrete_x, discrete_y = discrete_point
+        continuous_x = discrete_x*self.resolution
+        continuous_y = discrete_y*self.resolution
+        return continuous_x, continuous_y
 
     def update_certainty_at_continuous_point(self, continuous_point, certainty):
         """

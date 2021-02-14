@@ -10,8 +10,7 @@ from itertools import groupby
 from operator import itemgetter
 import numpy as np
 from numpy.lib.histograms import histogram
-from lib.geom_util import get_angle_between_points
-import sys
+from geom_util import get_angle_between_points
 
 
 class PathPlanner:
@@ -74,7 +73,6 @@ class PathPlanner:
         polar_histogram.smooth_histogram(self.l)
 
     def get_best_angle(self, robot_loc, target_loc):
-        print(sys.path)
         self.generate_histogram(robot_loc)
         robot_to_target_angle = get_angle_between_points(robot_loc, target_loc)
 
