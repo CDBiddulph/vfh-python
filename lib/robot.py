@@ -8,10 +8,8 @@ import matplotlib.patches as patches
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Button
 import math
-import time
 import numpy as np
 from IPython import display
-import warnings
 import itertools
 
 
@@ -23,24 +21,20 @@ from .polar_histogram import PolarHistogram
 class Robot:
     def __init__(self, histogram_grid, polar_histogram, init_location, target_location, init_speed):
         # CHANGED: we shouldn't need polar_histogram, only histogram_grid
-        self.path_planner = PathPlanner(histogram_grid, polar_histogram, init_location, target_location)
+        self.path_planner = PathPlanner(histogram_grid, polar_histogram)
+        self.location = init_location
         self.target_location = target_location
         self.speed = init_speed
         self.update_angle()
 
     @classmethod
     def from_map(cls, map_fname, init_location, target_location, init_speed, active_region_dimension, resolution, num_bins):
-        histogram_grid = HistogramGrid.from_map(
-            map_fname, active_region_dimension, resolution)
+        histogram_grid = HistogramGrid.from_map(map_fname, active_region_dimension, resolution)
         polar_histogram = PolarHistogram(num_bins)
         return cls(histogram_grid, polar_histogram, init_location, target_location, init_speed)
 
     def update_angle(self):
-        location = self.get_location()
-        continuous_displacement = (self.target_location[0] - location[0],
-                                   self.target_location[1] - location[1])
-        self.robot_to_target_angle = math.atan2(continuous_displacement[1], continuous_displacement[0])
-        self.move_angle = self.path_planner.get_best_angle(self.robot_to_target_angle)
+        self.move_angle = self.path_planner.get_best_angle(self.location, self.target_location)
 
     def set_speed(self, speed):
         self.speed = speed
@@ -52,9 +46,8 @@ class Robot:
 
     def update_location(self):
         velocity_x, velocity_y = self.velocity
-
-        old_x, old_y = self.get_location()
-        self.path_planner.set_robot_location((old_x + velocity_x, old_y + velocity_y))
+        old_x, old_y = self.location
+        self.location = (old_x + velocity_x, old_y + velocity_y)
 
     def get_location(self):
         return self.path_planner.robot_location
@@ -83,13 +76,11 @@ class Robot:
             # 1. Plot the simulation
             # get a list of points [(x1, y1), (x2, y2), ...]
             obstacles_x, obstacles_y = self.path_planner.histogram_grid.get_obstacles()
-            simulation_plot.scatter(*self.get_location(), color='blue')
-            simulation_plot.scatter(
-                *self.path_planner.target_location, color='green')
-            simulation_plot.scatter(
-                obstacles_x, obstacles_y, color='red')
-            active_region_min_x, active_region_min_y, active_region_max_x, active_region_max_y = self.path_planner.histogram_grid.get_active_region(
-                self.get_location())
+            simulation_plot.scatter(*self.location, color='blue')
+            simulation_plot.scatter(*self.target_location, color='green')
+            simulation_plot.scatter(obstacles_x, obstacles_y, color='red')
+            active_region_min_x, active_region_min_y, active_region_max_x, active_region_max_y = \
+                self.path_planner.histogram_grid.get_active_region(self.location)
             rectangle = simulation_plot.add_patch(
                 patches.Rectangle(
                     (active_region_min_x, active_region_min_y),
@@ -139,13 +130,13 @@ class Robot:
                 # 1. Replot the simulation
                 obstacles_x, obstacles_y = self.path_planner.histogram_grid.get_obstacles()
                 simulation_plot.scatter(
-                    *self.get_location(), color='blue')
+                    *self.location, color='blue')
                 simulation_plot.scatter(
-                    *self.path_planner.target_location, color='green')
+                    *self.target_location, color='green')
                 simulation_plot.scatter(
                     obstacles_x, obstacles_y, color='red')
                 active_region_min_x, active_region_min_y, active_region_max_x, active_region_max_y = self.path_planner.histogram_grid.get_active_region(
-                    self.get_location())
+                    self.location)
                 rectangle.set_bounds(active_region_min_x, active_region_min_y, active_region_max_x -
                                      active_region_min_x, active_region_max_y - active_region_min_y)
 

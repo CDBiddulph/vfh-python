@@ -9,11 +9,13 @@ import math
 from itertools import groupby
 from operator import itemgetter
 import numpy as np
+from numpy.lib.histograms import histogram
+from lib.geom_util import get_angle_between_points
+import sys
 
 
 class PathPlanner:
-    def __init__(self, histogram_grid, polar_histogram, robot_location, target_location, a=200, b=1, l=5,
-                 s_max=15, valley_threshold=200):
+    def __init__(self, histogram_grid, polar_histogram, a=200, b=1, l=5, s_max=15, valley_threshold=200):
         """
         Creates a Polar Histogram object with the number of bins passed.
 
@@ -30,14 +32,11 @@ class PathPlanner:
         self.l = l
         self.s_max = s_max
         self.valley_threshold = valley_threshold
-        self.target_location = target_location
-        self.robot_location = robot_location
 
 #   TODO: Add ability to dynamically set certainty value
 
     def set_robot_location(self, loc):
         self.robot_location = loc
-        self.generate_histogram(loc)
 
     def set_target_discrete_location(self, target_discrete_location):
         self.histogram_grid.set_target_discrete_location(
@@ -63,7 +62,7 @@ class PathPlanner:
                     node_considered, robot_location)
                 delta_certainty = (certainty ** 2) * \
                     (self.a - self.b * distance)
-                robot_to_node_angle = histogram_grid.get_angle_between_discrete_points(
+                robot_to_node_angle = get_angle_between_points(
                     robot_location, node_considered)
                 # print("path_planner: robot_to_node_angle between robot_location", robot_location,
                 #       "and node_considered", node_considered, "is", robot_to_node_angle)
@@ -74,7 +73,11 @@ class PathPlanner:
 
         polar_histogram.smooth_histogram(self.l)
 
-    def get_best_angle(self, robot_to_target_angle):
+    def get_best_angle(self, robot_loc, target_loc):
+        print(sys.path)
+        self.generate_histogram(robot_loc)
+        robot_to_target_angle = get_angle_between_points(robot_loc, target_loc)
+
         sectors = self.polar_histogram.get_sectors(self.valley_threshold)
         num_bins = self.polar_histogram.num_bins
         bin_width = self.polar_histogram.bin_width

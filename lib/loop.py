@@ -74,14 +74,14 @@ def loop_matplotlib(bike):
             prev_bike_patch.remove()
         bike_heading = bike.heading * (180 / math.pi)  # Converted to degrees
         wedge_angle = 45  # The angle covered by the wedge
-        bike_polygon = Wedge((bike.x, bike.y), 0.3,
+        bike_polygon = Wedge(bike.pos, 0.3,
                              bike_heading - wedge_angle / 2 + 180,
                              bike_heading + wedge_angle / 2 + 180, fc="black")
         axes.add_patch(bike_polygon)
         prev_bike_patch = bike_polygon
         fig.canvas.flush_events()
 
-        bike_trajectory.append((bike.x, bike.y))
+        bike_trajectory.append(bike.pos)
 
         speed, yaw_dot = bike.get_nav_command()
         bike.step(speed, yaw_dot)
@@ -121,7 +121,7 @@ def loop_matplotlib_blitting(bike, blitting=True):
     wedge_angle = 45  # The angle covered by the wedge (degrees)
     theta1 = bike_heading - wedge_angle / 2 + 180
     theta2 = bike_heading + wedge_angle / 2 + 180
-    bike_polygon = Wedge((bike.x, bike.y), 1, theta1, theta2, fc="black")
+    bike_polygon = Wedge(bike.pos, 1, theta1, theta2, fc="black")
     bike_polygon.set_zorder(10)
     axes.add_artist(bike_polygon)
 
@@ -129,8 +129,8 @@ def loop_matplotlib_blitting(bike, blitting=True):
     bike_trajectory_polygon = axes.plot([0, 0], [0, 0], "g")[0]
 
     # Set up trajectory data
-    bike_traj_x = [bike.x]  # Just the x-coords
-    bike_traj_y = [bike.y]  # Just the y-coords
+    bike_traj_x = [bike.pos[0]]  # Just the x-coords
+    bike_traj_y = [bike.pos[1]]  # Just the y-coords
     add_traj_x = bike_traj_x.append
     add_traj_y = bike_traj_y.append
 
@@ -172,8 +172,7 @@ def loop_matplotlib_blitting(bike, blitting=True):
 
         # Update bike polygon properties and redraw it
         wedge_dir = bike.heading * (180 / math.pi) + 180
-        bike_pos = (bike.x, bike.y)
-        bike_polygon.set(center=bike_pos,
+        bike_polygon.set(center=bike.pos,
                          theta1=wedge_dir - wedge_angle / 2,
                          theta2=wedge_dir + wedge_angle / 2)
         axes.draw_artist(bike_polygon)

@@ -1,8 +1,6 @@
-import numpy as np
 import csv
-from operator import sub  # for get_distance_between_discrete_points
 import math
-import os
+from lib.geom_util import get_discrete_displacement
 
 
 class HistogramGrid:
@@ -89,23 +87,6 @@ class HistogramGrid:
             sum(axis**2 for axis in continuous_displacement))
         return continuous_distance
 
-    @classmethod
-    def get_angle_between_discrete_points(cls, discrete_start, discrete_end):
-        """
-        Returns the angle between the line between pos2 and posRef and the horizontal along positive i direction.
-        """
-        # discrete_displacement = get_discrete_displacement(discrete_start, discrete_end)
-        y_del = discrete_end[1] - discrete_start[1]
-        x_del = discrete_end[0] - discrete_start[0]
-        angle = np.arctan2(y_del, x_del)
-        return angle % (2 * np.pi)  # TODO: this messed smoething up somehow
-        # delta_x, delta_y = discrete_displacement
-        # # print("histogram_grid: (delta_x, delta_y) =", discrete_displacement)
-        #
-        # angle_radian = math.atan2(delta_y, delta_x)
-        # angle_degrees = math.degrees(angle_radian)
-        # return angle_degrees
-
     def get_active_region(self, robot_location):
         # REVIEW: the four coordinates are discrete?
         # robot_location_x, robot_location_y = self.robot_location
@@ -177,7 +158,3 @@ class HistogramGrid:
         # Return histogram_grid[active_region_min_x:active_region_max_y]
         return [self.histogram_grid[row][active_region_min_x:active_region_max_x + 1] for row in range(active_region_min_y, active_region_max_y + 1)]
         # return [self.histogram_grid[row][active_region_min_y:active_region_max_y + 1] for row in range(active_region_min_x, active_region_max_x + 1)]
-
-
-def get_discrete_displacement(discrete_start, discrete_end):
-    return tuple(map(sub, discrete_start, discrete_end))
