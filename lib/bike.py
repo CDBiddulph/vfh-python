@@ -29,6 +29,8 @@ class Bike:
 
         self.path_planner = PathPlanner(histogram_grid, polar_histogram)
 
+        self.VFH_LOOKAHEAD_DIST = 20
+
     def step(self, speed, yaw_dot):
         """Perform one simulation step of the bike"""
         old_x, old_y = self.pos
@@ -40,10 +42,13 @@ class Bike:
     def get_nav_command(self):
         """Returns the pair (speed, yaw_dot)"""
         self.speed = self.MAX_SPEED
-        # self.update_yaw(self.goal[0], self.goal[1])
         best_angle = self.path_planner.get_best_angle(self.pos, self.target_pos)
         print(np.rad2deg(best_angle))
-        self.yaw = best_angle - self.heading
+
+        vfh_lookahead_x = self.pos[0] + self.VFH_LOOKAHEAD_DIST * math.cos(best_angle)
+        vfh_lookahead_y = self.pos[1] + self.VFH_LOOKAHEAD_DIST * math.sin(best_angle)
+        self.update_yaw(vfh_lookahead_x, vfh_lookahead_y)
+
         self.step_count += 1
         return self.speed, self.yaw
 
