@@ -28,9 +28,13 @@ class Robot:
         self.update_angle()
 
     @classmethod
-    def from_map(cls, map_fname, init_location, target_location, init_speed, active_region_dimension, resolution, num_bins):
-        histogram_grid = HistogramGrid.from_map(map_fname, active_region_dimension, resolution)
+    def from_map(cls, map_fname, is_txt, init_location, target_location, init_speed, active_region_dimension, resolution, num_bins):
+        histogram_grid = HistogramGrid.from_txt_map(map_fname, active_region_dimension, resolution) \
+            if is_txt else HistogramGrid.from_png_map(map_fname, active_region_dimension, resolution)
+
         polar_histogram = PolarHistogram(num_bins)
+        hist_shape = histogram_grid.get_shape()
+        target_location = (target_location[0]*hist_shape[0], target_location[1]*hist_shape[1])
         return cls(histogram_grid, polar_histogram, init_location, target_location, init_speed)
 
     def update_angle(self):

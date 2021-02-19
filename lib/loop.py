@@ -204,8 +204,8 @@ def loop_matplotlib_blitting(bike, blitting=True):
 
 def find_display_bounds(waypoints):
     """Given a set of waypoints, return {xlim, ylim} that can fit them."""
-    xlim = [99999, -99999]  # min, max
-    ylim = [99999, -99999]  # min, max
+    xlim = [float("inf"), -float("inf")]  # min, max
+    ylim = [float("inf"), -float("inf")]  # min, max
     padding = 5
     for waypoint in waypoints:
         if waypoint[0] < xlim[0]:
@@ -225,7 +225,7 @@ if __name__ == '__main__':
     STARTING_LOC = (0, 0)
     STARTING_HEADING = 0
     TARGET_LOC = (50, 50)
-    histogram_grid = HistogramGrid.from_map("vfh-python/map.txt", (16, 16), 1)
+    histogram_grid = HistogramGrid.from_txt_map("vfh-python/map.txt", (16, 16), 1)
     polar_histogram = PolarHistogram(36)
 
     bike = Bike(histogram_grid, polar_histogram, STARTING_LOC, TARGET_LOC, STARTING_HEADING)

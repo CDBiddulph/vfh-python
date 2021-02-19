@@ -1,6 +1,8 @@
 import csv
 import math
 from geom_util import get_discrete_displacement
+import numpy as np
+import imageio
 
 
 class HistogramGrid:
@@ -19,7 +21,7 @@ class HistogramGrid:
         self.active_region_dimension = active_region_dimension
 
     @classmethod
-    def from_map(cls, map_fname, active_region_dimension, resolution):
+    def from_txt_map(cls, map_fname, active_region_dimension, resolution):
         """
         Args:
             active_region_dimension: a tuple (x, y).
@@ -30,9 +32,18 @@ class HistogramGrid:
 
         # Convert string "1"s and "0"s to integer 1s and 0s
         lines = list(map(lambda l: list(map(int, l)), lines))
-        # print("histogram_grid: histogram =")
-        # print(*lines, sep="\n")
+        lines = np.asarray(lines)
         dimension = (len(lines[0]), len(lines))
+        hg = cls(dimension, resolution, active_region_dimension)
+        hg.histogram_grid = lines
+        return hg
+
+    @classmethod
+    def from_png_map(cls, map_fname, active_region_dimension, resolution):
+        lines = np.asarray(imageio.imread(map_fname))
+        lines = np.average(-lines + 255, axis=2)
+        lines = lines*100//255
+        dimension = lines.shape
         hg = cls(dimension, resolution, active_region_dimension)
         hg.histogram_grid = lines
         return hg
@@ -94,12 +105,7 @@ class HistogramGrid:
         return continuous_distance
 
     def get_active_region(self, robot_location):
-        # REVIEW: the four coordinates are discrete?
-        # robot_location_x, robot_location_y = self.robot_location
-        # CHANGED: Make Robot class the sole source of truth for location
         robot_location_x, robot_location_y = robot_location
-        # print("histogram_grid: self.robot_location =", self.robot_location)
-        # print("histogram_grid: get_active_region: self.active_region_dimension =", self.active_region_dimension)
         active_region_x_size, active_region_y_size = self.active_region_dimension
         x_max, y_max = self.dimension
 
@@ -164,3 +170,6 @@ class HistogramGrid:
         # Return histogram_grid[active_region_min_x:active_region_max_y]
         return [self.histogram_grid[row][active_region_min_x:active_region_max_x + 1] for row in range(active_region_min_y, active_region_max_y + 1)]
         # return [self.histogram_grid[row][active_region_min_y:active_region_max_y + 1] for row in range(active_region_min_x, active_region_max_x + 1)]
+
+    def get_shape(self):
+        return self.histogram_grid.shape
