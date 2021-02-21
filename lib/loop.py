@@ -113,8 +113,8 @@ def loop_matplotlib_blitting(bike, blitting=True):
         axes.add_collection(lc)
 
     # Plot obstacles
-    for obstacle in bike.get_obstacles():
-        axes.add_artist(Circle(obstacle, radius=0.5))
+    for x, y, prob in bike.get_obstacles():
+        axes.add_artist(Circle((x, y), radius=0.5, alpha=prob/100))
 
     # Paths and obstacles won't change, so capture them
     figure.canvas.draw()
@@ -225,7 +225,7 @@ if __name__ == '__main__':
     STARTING_LOC = (0, 0)
     STARTING_HEADING = 0
     TARGET_LOC = (50, 50)
-    histogram_grid = HistogramGrid.from_txt_map("vfh-python/map.txt", (16, 16), 1)
+    histogram_grid = HistogramGrid.from_png_map("vfh-python/maps/map1_s.png", (16, 16), 1)
     polar_histogram = PolarHistogram(36)
 
     bike = Bike(histogram_grid, polar_histogram, STARTING_LOC, TARGET_LOC, STARTING_HEADING)

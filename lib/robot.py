@@ -33,8 +33,12 @@ class Robot:
             if is_txt else HistogramGrid.from_png_map(map_fname, active_region_dimension, resolution)
 
         polar_histogram = PolarHistogram(num_bins)
+
+        # x and y of the init and target location go from the [0, 1] range to the actual dimensions of the map
         hist_shape = histogram_grid.get_shape()
+        init_location = (init_location[0]*hist_shape[0], init_location[1]*hist_shape[1])
         target_location = (target_location[0]*hist_shape[0], target_location[1]*hist_shape[1])
+
         return cls(histogram_grid, polar_histogram, init_location, target_location, init_speed)
 
     def update_angle(self):

@@ -73,7 +73,7 @@ class Bike:
 
     def get_obstacles(self):
         hg = self.path_planner.histogram_grid
-        return [hg.discrete_point_to_continous_point(p) for p in zip(*hg.get_obstacles())]
+        return [(*hg.discrete_point_to_continous_point((x, y)), prob) for x, y, prob in zip(*hg.get_obstacles())]
 
 
 def get_curvature(x1, y1, x2, y2, x3, y3):

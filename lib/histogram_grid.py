@@ -157,14 +157,15 @@ class HistogramGrid:
 
         obstacles_points_x = []
         obstacles_points_y = []
+        obstacles_points_prob = []
         for row_idx, row in enumerate(self.histogram_grid):
             for col_idx, cell in enumerate(row):
                 if cell != 0:
                     # print("histogram_grid: obstacle =", (row_idx, col_idx))
                     obstacles_points_x.append(col_idx)
                     obstacles_points_y.append(row_idx)
-        # print("histogram_grid: obstacles_points =", list(zip(obstacles_points_x, obstacles_points_y)))
-        return obstacles_points_x, obstacles_points_y
+                    obstacles_points_prob.append(cell)
+        return obstacles_points_x, obstacles_points_y, obstacles_points_prob
 
     def get_histogram_grid_active_region(self, active_region_min_x, active_region_min_y, active_region_max_x, active_region_max_y):
         # Return histogram_grid[active_region_min_x:active_region_max_y]
