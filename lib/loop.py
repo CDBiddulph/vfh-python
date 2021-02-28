@@ -8,7 +8,9 @@ from numpy.lib.arraypad import pad
 from bike import Bike
 from histogram_grid import HistogramGrid
 from polar_histogram import PolarHistogram
+from pure_pursuit import PPPathPlanner
 from vfh_path_planner import VFHPathPlanner
+from combined_path_planner import CombinedPathPlanner
 
 import numpy as np
 
@@ -102,7 +104,7 @@ def loop_matplotlib_blitting(bike, blitting=True):
     if hasattr(bike, 'waypoints'):
         axes = plt.axes(**find_display_bounds(bike.waypoints))
     else:
-        right_bound, upper_bound = bike.vfh_path_planner.histogram_grid.get_real_size()
+        right_bound, upper_bound = bike.path_planner.get_histogram_grid().get_real_size()
         padding = 10
         axes = plt.axes(xlim=[-padding, right_bound + padding], ylim=[-padding, upper_bound + padding])
 
@@ -110,12 +112,8 @@ def loop_matplotlib_blitting(bike, blitting=True):
     axes.set_aspect("equal")
 
     # Plot paths
-    if hasattr(bike, 'paths'):
-        paths = bike.paths
-
-        # Draw the paths
-        lc = mc.LineCollection(paths, linewidths=2, color="blue")
-        axes.add_collection(lc)
+    lc = mc.LineCollection(bike.get_paths(), linewidths=2, color="blue")
+    axes.add_collection(lc)
 
     # Plot obstacles
     for x, y, prob in bike.get_obstacles():
@@ -134,6 +132,11 @@ def loop_matplotlib_blitting(bike, blitting=True):
     bike_polygon = Wedge(bike.pos, 1, theta1, theta2, fc="black")
     bike_polygon.set_zorder(10)
     axes.add_artist(bike_polygon)
+
+    # Create pure pursuit lookahead point
+    pp_lookahead_polygon = Circle((0, 0), radius=0.5, color="r")
+    pp_lookahead_polygon.set_zorder(9)
+    axes.add_artist(pp_lookahead_polygon)
 
     # Create bike trajectory
     bike_trajectory_polygon = axes.plot([0, 0], [0, 0], "g")[0]
@@ -156,7 +159,7 @@ def loop_matplotlib_blitting(bike, blitting=True):
 
     def grab_background(event=None):
         # transient_polygons = (bike_polygon, lookahead_polygon, current_line, dropped_polygon)
-        transient_polygons = (bike_polygon,)
+        transient_polygons = (bike_polygon, pp_lookahead_polygon)
         for polygon in transient_polygons:
             polygon.set_visible(False)
         safe_draw()
@@ -168,6 +171,7 @@ def loop_matplotlib_blitting(bike, blitting=True):
     def blit():
         figure.canvas.restore_region(background[0])
         axes.draw_artist(bike_polygon)
+        axes.draw_artist(pp_lookahead_polygon)
         figure.canvas.blit(axes.bbox)
 
     listener_id[0] = figure.canvas.mpl_connect("draw_event", grab_background)
@@ -186,6 +190,10 @@ def loop_matplotlib_blitting(bike, blitting=True):
                          theta1=wedge_dir - wedge_angle / 2,
                          theta2=wedge_dir + wedge_angle / 2)
         axes.draw_artist(bike_polygon)
+
+        # Update PP lookahead polygon properties and redraw it
+        pp_lookahead_polygon.set(center=bike.get_lookahead())
+        axes.draw_artist(pp_lookahead_polygon)
 
         # Update trajectory and redraw it
         add_traj_x(bike.pos[0])
@@ -233,7 +241,10 @@ if __name__ == '__main__':
     histogram_grid = HistogramGrid.from_png_map("maps/map1_s.png", (16, 16), 1)
     polar_histogram = PolarHistogram(36)
 
+    waypoints = [(0, 0), (40, 15), (30, 50), (50, 50)]
+    pp_path_planner = PPPathPlanner(waypoints, lookahead_dist=5)
     vfh_path_planner = VFHPathPlanner(histogram_grid, polar_histogram, valley_threshold=500000)
-    bike = Bike(vfh_path_planner, STARTING_LOC, TARGET_LOC, STARTING_HEADING)
+    combined_path_planner = CombinedPathPlanner(pp_path_planner, vfh_path_planner)
+    bike = Bike(combined_path_planner, STARTING_LOC, TARGET_LOC, STARTING_HEADING, dir_lookahead_dist=50)
 
     get_loop_function()(bike)

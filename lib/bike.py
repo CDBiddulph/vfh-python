@@ -1,7 +1,4 @@
 import math
-import numpy as np
-import queue
-from vfh_path_planner import VFHPathPlanner
 
 # Used for the simulation
 SMALL_DISTANCE = 0.01
@@ -9,7 +6,7 @@ SMALL_ANGLE = 0.01
 
 
 class Bike:
-    def __init__(self, vfh_path_planner, start_pos, target_pos, heading, max_speed=5, max_accel=0.3, curve_const=3, yaw_adjust_speed=50, vfh_lookahead_dist=25):
+    def __init__(self, path_planner, start_pos, target_pos, heading, max_speed=5, max_accel=0.3, curve_const=3, yaw_adjust_speed=50, dir_lookahead_dist=25):
         """
         x = starting x-coordinate, in m (+x points to the right)
         y = starting y-coordinate, in m (+y points upwards)
@@ -27,9 +24,9 @@ class Bike:
         self.CURVE_CONST = curve_const
         self.YAW_ADJUST_SPEED = yaw_adjust_speed
 
-        self.vfh_path_planner = vfh_path_planner
+        self.path_planner = path_planner
 
-        self.VFH_LOOKAHEAD_DIST = vfh_lookahead_dist
+        self.DIR_LOOKAHEAD_DIST = dir_lookahead_dist
 
     def step(self, speed, yaw_dot):
         """Perform one simulation step of the bike"""
@@ -42,11 +39,11 @@ class Bike:
     def get_nav_command(self):
         """Returns the pair (speed, yaw_dot)"""
         self.speed = self.MAX_SPEED
-        best_angle = self.vfh_path_planner.get_best_angle(self.pos, self.target_pos)
+        best_angle = self.path_planner.get_best_angle(self.pos)
 
-        vfh_lookahead_x = self.pos[0] + self.VFH_LOOKAHEAD_DIST * math.cos(best_angle)
-        vfh_lookahead_y = self.pos[1] + self.VFH_LOOKAHEAD_DIST * math.sin(best_angle)
-        self.update_yaw(vfh_lookahead_x, vfh_lookahead_y)
+        lookahead_x = self.pos[0] + self.DIR_LOOKAHEAD_DIST * math.cos(best_angle)
+        lookahead_y = self.pos[1] + self.DIR_LOOKAHEAD_DIST * math.sin(best_angle)
+        self.update_yaw(lookahead_x, lookahead_y)
 
         self.step_count += 1
         return self.speed, self.yaw
@@ -72,7 +69,16 @@ class Bike:
         return reverse_x, reverse_y
 
     def get_obstacles(self):
-        return self.vfh_path_planner.histogram_grid.get_obstacles()
+        return self.path_planner.get_histogram_grid().get_obstacles()
+
+    def get_path_planner(self):
+        return self.path_planner
+
+    def get_paths(self):
+        return self.path_planner.get_paths()
+
+    def get_lookahead(self):
+        return self.path_planner.get_lookahead()
 
 
 def get_curvature(x1, y1, x2, y2, x3, y3):

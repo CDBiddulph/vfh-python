@@ -1,9 +1,3 @@
-"""
-path_planner.py
-
-PathPlanner should cannibalize both histogram_grid and polar_histogram. There
-is no reason that
-"""
 import warnings
 import math
 from itertools import groupby
@@ -134,3 +128,9 @@ class VFHPathPlanner:
 
     def get_j_max(self):
         return self.histogram_grid.get_j_max()
+
+    def get_histogram_grid(self):
+        return self.histogram_grid
+
+    def get_polar_histogram(self):
+        return self.polar_histogram
