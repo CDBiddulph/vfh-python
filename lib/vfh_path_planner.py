@@ -8,7 +8,7 @@ from geom_util import get_angle_between_points
 
 
 class VFHPathPlanner:
-    def __init__(self, histogram_grid, polar_histogram, a=200, b=1, l=5, s_max=15, valley_threshold=200):
+    def __init__(self, histogram_grid, polar_histogram, l=5, s_max=15, valley_threshold=200):
         """
         Creates a Polar Histogram object with the number of bins passed.
 
@@ -20,13 +20,17 @@ class VFHPathPlanner:
         """
         self.polar_histogram = polar_histogram
         self.histogram_grid = histogram_grid
-        self.a = a
-        self.b = b
         self.l = l
         self.s_max = s_max
         self.valley_threshold = valley_threshold
 
-#   TODO: Add ability to dynamically set certainty value
+        self.calculate_a_and_b()
+
+    def calculate_a_and_b(self):
+        # TODO: calculate a and b
+        # d_max = math.sqrt(2) * (self.histogram_grid.dimension)/2
+        self.a = 200
+        self.b = 1
 
     def set_robot_location(self, loc):
         self.robot_location = loc

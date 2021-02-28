@@ -11,6 +11,9 @@ class HistogramGrid:
         dimension: Number of cells.
         resolution: Size of the cell in centimeters.
         """
+        # not sure if I should do this
+        # assert(active_region_dimension % 2 == 1, "active_region_dimension should be odd")
+
         self.dimension = dimension
         self.resolution = resolution
         ncols, nrows = dimension
@@ -132,6 +135,7 @@ class HistogramGrid:
             # print("\nactive_region_max_y >= y_max\n")
             active_region_max_y = y_max
 
+        # TODO: is rounding the best way to do this?
         active_region = (int(round(active_region_min_x)), int(round(active_region_min_y)), int(
             round(active_region_max_x)), int(round(active_region_max_y)))
 

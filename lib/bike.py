@@ -25,6 +25,7 @@ class Bike:
         self.YAW_ADJUST_SPEED = yaw_adjust_speed
 
         self.path_planner = path_planner
+        self.lookahead_point = None
 
         self.DIR_LOOKAHEAD_DIST = dir_lookahead_dist
 
@@ -41,15 +42,16 @@ class Bike:
         self.speed = self.MAX_SPEED
         best_angle = self.path_planner.get_best_angle(self.pos)
 
-        lookahead_x = self.pos[0] + self.DIR_LOOKAHEAD_DIST * math.cos(best_angle)
-        lookahead_y = self.pos[1] + self.DIR_LOOKAHEAD_DIST * math.sin(best_angle)
-        self.update_yaw(lookahead_x, lookahead_y)
+        self.lookahead_point = (self.pos[0] + self.DIR_LOOKAHEAD_DIST * math.cos(best_angle),
+                                self.pos[1] + self.DIR_LOOKAHEAD_DIST * math.sin(best_angle))
+        self.update_yaw()
 
         self.step_count += 1
         return self.speed, self.yaw
 
-    def update_yaw(self, follow_x, follow_y):
+    def update_yaw(self):
         """Returns the pair (speed, yaw_dot)"""
+        follow_x, follow_y = self.lookahead_point
         reverse_x, reverse_y = self.get_reverse_point(follow_x, follow_y)
         curvature = get_curvature(follow_x, follow_y, self.pos[0], self.pos[1], reverse_x, reverse_y)
         sign = -math.sin(self.heading - math.atan2(follow_y - self.pos[1], follow_x - self.pos[0]))
@@ -77,8 +79,11 @@ class Bike:
     def get_paths(self):
         return self.path_planner.get_paths()
 
-    def get_lookahead(self):
+    def get_nav_lookahead(self):
         return self.path_planner.get_lookahead()
+
+    def get_dir_lookahead(self):
+        return self.lookahead_point
 
 
 def get_curvature(x1, y1, x2, y2, x3, y3):

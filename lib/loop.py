@@ -138,6 +138,11 @@ def loop_matplotlib_blitting(bike, blitting=True):
     pp_lookahead_polygon.set_zorder(9)
     axes.add_artist(pp_lookahead_polygon)
 
+    # Create lookahead point from low-level direction tracking
+    dir_lookahead_polygon = Circle((0, 0), radius=0.5, color="orange")
+    dir_lookahead_polygon.set_zorder(9)
+    axes.add_artist(dir_lookahead_polygon)
+
     # Create bike trajectory
     bike_trajectory_polygon = axes.plot([0, 0], [0, 0], "g")[0]
 
@@ -158,8 +163,7 @@ def loop_matplotlib_blitting(bike, blitting=True):
         listener_id[0] = canvas.mpl_connect("draw_event", grab_background)
 
     def grab_background(event=None):
-        # transient_polygons = (bike_polygon, lookahead_polygon, current_line, dropped_polygon)
-        transient_polygons = (bike_polygon, pp_lookahead_polygon)
+        transient_polygons = (bike_polygon, pp_lookahead_polygon, dir_lookahead_polygon)
         for polygon in transient_polygons:
             polygon.set_visible(False)
         safe_draw()
@@ -172,6 +176,7 @@ def loop_matplotlib_blitting(bike, blitting=True):
         figure.canvas.restore_region(background[0])
         axes.draw_artist(bike_polygon)
         axes.draw_artist(pp_lookahead_polygon)
+        axes.draw_artist(dir_lookahead_polygon)
         figure.canvas.blit(axes.bbox)
 
     listener_id[0] = figure.canvas.mpl_connect("draw_event", grab_background)
@@ -192,8 +197,12 @@ def loop_matplotlib_blitting(bike, blitting=True):
         axes.draw_artist(bike_polygon)
 
         # Update PP lookahead polygon properties and redraw it
-        pp_lookahead_polygon.set(center=bike.get_lookahead())
+        pp_lookahead_polygon.set(center=bike.get_nav_lookahead())
         axes.draw_artist(pp_lookahead_polygon)
+
+        # Update PP lookahead polygon properties and redraw it
+        dir_lookahead_polygon.set(center=bike.get_dir_lookahead())
+        axes.draw_artist(dir_lookahead_polygon)
 
         # Update trajectory and redraw it
         add_traj_x(bike.pos[0])
@@ -242,9 +251,9 @@ if __name__ == '__main__':
     polar_histogram = PolarHistogram(36)
 
     waypoints = [(0, 0), (40, 15), (30, 50), (50, 50)]
-    pp_path_planner = PPPathPlanner(waypoints, lookahead_dist=5)
-    vfh_path_planner = VFHPathPlanner(histogram_grid, polar_histogram, valley_threshold=500000)
+    pp_path_planner = PPPathPlanner(waypoints, lookahead_dist=20)
+    vfh_path_planner = VFHPathPlanner(histogram_grid, polar_histogram, valley_threshold=5)
     combined_path_planner = CombinedPathPlanner(pp_path_planner, vfh_path_planner)
-    bike = Bike(combined_path_planner, STARTING_LOC, TARGET_LOC, STARTING_HEADING, dir_lookahead_dist=50)
+    bike = Bike(combined_path_planner, STARTING_LOC, TARGET_LOC, STARTING_HEADING, dir_lookahead_dist=5)
 
     get_loop_function()(bike)
