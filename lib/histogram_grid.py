@@ -165,7 +165,8 @@ class HistogramGrid:
                     obstacles_points_x.append(col_idx)
                     obstacles_points_y.append(row_idx)
                     obstacles_points_prob.append(cell)
-        return obstacles_points_x, obstacles_points_y, obstacles_points_prob
+        return [(*self.discrete_point_to_continous_point((x, y)), prob)
+                for x, y, prob in zip(obstacles_points_x, obstacles_points_y, obstacles_points_prob)]
 
     def get_histogram_grid_active_region(self, active_region_min_x, active_region_min_y, active_region_max_x, active_region_max_y):
         # Return histogram_grid[active_region_min_x:active_region_max_y]
@@ -174,3 +175,6 @@ class HistogramGrid:
 
     def get_shape(self):
         return self.histogram_grid.shape
+
+    def get_real_size(self):
+        return self.dimension[0] * self.resolution, self.dimension[1] * self.resolution

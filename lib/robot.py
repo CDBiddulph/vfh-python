@@ -13,7 +13,7 @@ from IPython import display
 import itertools
 
 
-from .path_planner import PathPlanner
+from .vfh_path_planner import VFHPathPlanner
 from .histogram_grid import HistogramGrid
 from .polar_histogram import PolarHistogram
 
@@ -21,7 +21,7 @@ from .polar_histogram import PolarHistogram
 class Robot:
     def __init__(self, histogram_grid, polar_histogram, init_location, target_location, init_speed):
         # CHANGED: we shouldn't need polar_histogram, only histogram_grid
-        self.path_planner = PathPlanner(histogram_grid, polar_histogram)
+        self.vfh_path_planner = vfh_path_planner
         self.location = init_location
         self.target_location = target_location
         self.speed = init_speed
@@ -39,10 +39,10 @@ class Robot:
         init_location = (init_location[0]*hist_shape[0], init_location[1]*hist_shape[1])
         target_location = (target_location[0]*hist_shape[0], target_location[1]*hist_shape[1])
 
-        return cls(histogram_grid, polar_histogram, init_location, target_location, init_speed)
+        return cls(VFHPathPlanner(histogram_grid, polar_histogram), init_location, target_location, init_speed)
 
     def update_angle(self):
-        self.move_angle = self.path_planner.get_best_angle(self.location, self.target_location)
+        self.move_angle = self.vfh_path_planner.get_best_angle(self.location, self.target_location)
 
     def set_speed(self, speed):
         self.speed = speed
@@ -58,7 +58,7 @@ class Robot:
         self.location = (old_x + velocity_x, old_y + velocity_y)
 
     def get_location(self):
-        return self.path_planner.robot_location
+        return self.vfh_path_planner.robot_location
 
     # Main function per timestep
     # 1. Get angle from nothing at t=0, then
@@ -83,12 +83,12 @@ class Robot:
 
             # 1. Plot the simulation
             # get a list of points [(x1, y1), (x2, y2), ...]
-            obstacles_x, obstacles_y = self.path_planner.histogram_grid.get_obstacles()
             simulation_plot.scatter(*self.location, color='blue')
             simulation_plot.scatter(*self.target_location, color='green')
-            simulation_plot.scatter(obstacles_x, obstacles_y, color='red')
+            for x, y, prob in self.vfh_path_planner.histogram_grid.get_obstacles():
+                simulation_plot.scatter(x, y, color='red', alpha=prob)
             active_region_min_x, active_region_min_y, active_region_max_x, active_region_max_y = \
-                self.path_planner.histogram_grid.get_active_region(self.location)
+                self.vfh_path_planner.histogram_grid.get_active_region(self.location)
             rectangle = simulation_plot.add_patch(
                 patches.Rectangle(
                     (active_region_min_x, active_region_min_y),
@@ -99,9 +99,9 @@ class Robot:
             )
 
             # 2. Plot the polar histogram
-            num_bins = self.path_planner.polar_histogram.num_bins
-            valley_threshold = self.path_planner.valley_threshold
-            polar_histogram_by_angle = self.path_planner.polar_histogram.get_angle_certainty()
+            num_bins = self.vfh_path_planner.polar_histogram.num_bins
+            valley_threshold = self.vfh_path_planner.valley_threshold
+            polar_histogram_by_angle = self.vfh_path_planner.polar_histogram.get_angle_certainty()
             # NOTE: instead of sectors, get polar histogram bins and filter them by valley threshold
             bin_percentages = [1.0/num_bins for angle,
                                certainty in polar_histogram_by_angle]
@@ -122,7 +122,7 @@ class Robot:
                 bin_percentages, colors=colors, labels=labels, startangle=0, counterclock=True, autopct=make_autopct(bin_percentages))
 
             # 3. Plot the valley
-            histogram_grid_active_region = self.path_planner.histogram_grid.get_histogram_grid_active_region(
+            histogram_grid_active_region = self.vfh_path_planner.histogram_grid.get_histogram_grid_active_region(
                 active_region_min_x, active_region_min_y, active_region_max_x, active_region_max_y)
             # print('active region histogram =')
             # print(*histogram_grid_active_region, sep='\n')
@@ -136,23 +136,20 @@ class Robot:
                 # time.sleep(1)
 
                 # 1. Replot the simulation
-                obstacles_x, obstacles_y = self.path_planner.histogram_grid.get_obstacles()
-                simulation_plot.scatter(
-                    *self.location, color='blue')
-                simulation_plot.scatter(
-                    *self.target_location, color='green')
-                simulation_plot.scatter(
-                    obstacles_x, obstacles_y, color='red')
-                active_region_min_x, active_region_min_y, active_region_max_x, active_region_max_y = self.path_planner.histogram_grid.get_active_region(
+                simulation_plot.scatter(*self.location, color='blue')
+                simulation_plot.scatter(*self.target_location, color='green')
+                for x, y, prob in self.vfh_path_planner.histogram_grid.get_obstacles():
+                    simulation_plot.scatter(x, y, color='red', alpha=prob)
+                active_region_min_x, active_region_min_y, active_region_max_x, active_region_max_y = self.vfh_path_planner.histogram_grid.get_active_region(
                     self.location)
                 rectangle.set_bounds(active_region_min_x, active_region_min_y, active_region_max_x -
                                      active_region_min_x, active_region_max_y - active_region_min_y)
 
                 # 2. Replot the polar histogram
-                # sectors = self.path_planner.get_sectors() # NOTE: sectors are only valid
-                num_bins = self.path_planner.polar_histogram.num_bins
-                valley_threshold = self.path_planner.valley_threshold
-                polar_histogram_by_angle = self.path_planner.polar_histogram.get_angle_certainty()
+                # sectors = self.vfh_path_planner.get_sectors() # NOTE: sectors are only valid
+                num_bins = self.vfh_path_planner.polar_histogram.num_bins
+                valley_threshold = self.vfh_path_planner.valley_threshold
+                polar_histogram_by_angle = self.vfh_path_planner.polar_histogram.get_angle_certainty()
                 # NOTE: instead of sectors, get polar histogram bins and filter them by valley threshold
                 bin_percentages = [1.0/num_bins for angle,
                                    certainty in polar_histogram_by_angle]
@@ -175,7 +172,7 @@ class Robot:
                                startangle=0, autopct=make_autopct(bin_percentages))
 
                 # 3. Replot the histogram_grid
-                histogram_grid_active_region = self.path_planner.histogram_grid.get_histogram_grid_active_region(
+                histogram_grid_active_region = self.vfh_path_planner.histogram_grid.get_histogram_grid_active_region(
                     active_region_min_x, active_region_min_y, active_region_max_x, active_region_max_y)
                 # print('active region histogram =')
                 # print(*histogram_grid_active_region, sep='\n')
@@ -188,7 +185,7 @@ class Robot:
                 display.display(plt.gcf())
 
     def print_histogram(self):
-        self.path_planner.print_histogram()
+        self.vfh_path_planner.print_histogram()
 
     def get_polar_bins(self):
         return self.polar_histogram.getPolarBins()

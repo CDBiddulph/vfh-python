@@ -3,9 +3,12 @@ at the bottom of the file"""
 
 import sys
 import math
+
+from numpy.lib.arraypad import pad
 from bike import Bike
 from histogram_grid import HistogramGrid
 from polar_histogram import PolarHistogram
+from vfh_path_planner import VFHPathPlanner
 
 import numpy as np
 
@@ -99,7 +102,9 @@ def loop_matplotlib_blitting(bike, blitting=True):
     if hasattr(bike, 'waypoints'):
         axes = plt.axes(**find_display_bounds(bike.waypoints))
     else:
-        axes = plt.axes(xlim=[-10, 60], ylim=[-10, 60])
+        right_bound, upper_bound = bike.vfh_path_planner.histogram_grid.get_real_size()
+        padding = 10
+        axes = plt.axes(xlim=[-padding, right_bound + padding], ylim=[-padding, upper_bound + padding])
 
     # Square aspect ratio for the axes
     axes.set_aspect("equal")
@@ -225,9 +230,10 @@ if __name__ == '__main__':
     STARTING_LOC = (0, 0)
     STARTING_HEADING = 0
     TARGET_LOC = (50, 50)
-    histogram_grid = HistogramGrid.from_png_map("vfh-python/maps/map1_s.png", (16, 16), 1)
+    histogram_grid = HistogramGrid.from_png_map("maps/map1_s.png", (16, 16), 1)
     polar_histogram = PolarHistogram(36)
 
-    bike = Bike(histogram_grid, polar_histogram, STARTING_LOC, TARGET_LOC, STARTING_HEADING)
+    vfh_path_planner = VFHPathPlanner(histogram_grid, polar_histogram, valley_threshold=500000)
+    bike = Bike(vfh_path_planner, STARTING_LOC, TARGET_LOC, STARTING_HEADING)
 
     get_loop_function()(bike)

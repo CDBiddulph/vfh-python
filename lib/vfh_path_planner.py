@@ -13,7 +13,7 @@ from numpy.lib.histograms import histogram
 from geom_util import get_angle_between_points
 
 
-class PathPlanner:
+class VFHPathPlanner:
     def __init__(self, histogram_grid, polar_histogram, a=200, b=1, l=5, s_max=15, valley_threshold=200):
         """
         Creates a Polar Histogram object with the number of bins passed.
@@ -55,14 +55,11 @@ class PathPlanner:
         for x in range(active_region_min_x, active_region_max_x):
             for y in range(active_region_min_y, active_region_max_y):
                 node_considered = (x, y)
-                certainty = histogram_grid.get_certainty_at_discrete_point(
-                    node_considered)
+                certainty = histogram_grid.get_certainty_at_discrete_point(node_considered)
                 distance = histogram_grid.get_continuous_distance_between_discrete_points(
                     node_considered, robot_location)
-                delta_certainty = (certainty ** 2) * \
-                    (self.a - self.b * distance)
-                robot_to_node_angle = get_angle_between_points(
-                    robot_location, node_considered)
+                delta_certainty = (certainty ** 2) * (self.a - self.b * distance)
+                robot_to_node_angle = get_angle_between_points(robot_location, node_considered)
                 # print("path_planner: robot_to_node_angle between robot_location", robot_location,
                 #       "and node_considered", node_considered, "is", robot_to_node_angle)
                 if delta_certainty != 0:

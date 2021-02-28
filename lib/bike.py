@@ -1,7 +1,7 @@
 import math
 import numpy as np
 import queue
-from path_planner import PathPlanner
+from vfh_path_planner import VFHPathPlanner
 
 # Used for the simulation
 SMALL_DISTANCE = 0.01
@@ -9,7 +9,7 @@ SMALL_ANGLE = 0.01
 
 
 class Bike:
-    def __init__(self, histogram_grid, polar_histogram, start_pos, target_pos, heading):
+    def __init__(self, vfh_path_planner, start_pos, target_pos, heading, max_speed=5, max_accel=0.3, curve_const=3, yaw_adjust_speed=50, vfh_lookahead_dist=25):
         """
         x = starting x-coordinate, in m (+x points to the right)
         y = starting y-coordinate, in m (+y points upwards)
@@ -22,14 +22,14 @@ class Bike:
         self.yaw = 0
         self.step_count = 0
 
-        self.MAX_SPEED = 5
-        self.MAX_ACCEL = 0.3
-        self.CURVE_CONST = 3
-        self.YAW_ADJUST_SPEED = 50
+        self.MAX_SPEED = max_speed
+        self.MAX_ACCEL = max_accel
+        self.CURVE_CONST = curve_const
+        self.YAW_ADJUST_SPEED = yaw_adjust_speed
 
-        self.path_planner = PathPlanner(histogram_grid, polar_histogram)
+        self.vfh_path_planner = vfh_path_planner
 
-        self.VFH_LOOKAHEAD_DIST = 25
+        self.VFH_LOOKAHEAD_DIST = vfh_lookahead_dist
 
     def step(self, speed, yaw_dot):
         """Perform one simulation step of the bike"""
@@ -42,7 +42,7 @@ class Bike:
     def get_nav_command(self):
         """Returns the pair (speed, yaw_dot)"""
         self.speed = self.MAX_SPEED
-        best_angle = self.path_planner.get_best_angle(self.pos, self.target_pos)
+        best_angle = self.vfh_path_planner.get_best_angle(self.pos, self.target_pos)
 
         vfh_lookahead_x = self.pos[0] + self.VFH_LOOKAHEAD_DIST * math.cos(best_angle)
         vfh_lookahead_y = self.pos[1] + self.VFH_LOOKAHEAD_DIST * math.sin(best_angle)
@@ -72,8 +72,7 @@ class Bike:
         return reverse_x, reverse_y
 
     def get_obstacles(self):
-        hg = self.path_planner.histogram_grid
-        return [(*hg.discrete_point_to_continous_point((x, y)), prob) for x, y, prob in zip(*hg.get_obstacles())]
+        return self.vfh_path_planner.histogram_grid.get_obstacles()
 
 
 def get_curvature(x1, y1, x2, y2, x3, y3):
