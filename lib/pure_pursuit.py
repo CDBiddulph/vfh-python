@@ -20,7 +20,7 @@ class PPPathPlanner:
         self.lookahead_index = 0
         self.lookahead_point = None
         # how many path segments can be skipped at once
-        self.skip_limit = 2
+        self.skip_limit = skip_limit
 
         self.LOOKAHEAD_DIST = lookahead_dist
 

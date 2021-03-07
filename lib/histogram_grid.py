@@ -89,8 +89,10 @@ class HistogramGrid:
         Returns the certainty of an object being present at the given node
         """
         discrete_x, discrete_y = discrete_point
-        # return self.histogram_grid[discrete_x][discrete_y]
-        return self.histogram_grid[discrete_y][discrete_x]
+        try:
+            return self.histogram_grid[discrete_y][discrete_x]
+        except IndexError:
+            return 0
 
     def get_continuous_distance_between_discrete_points(self, discrete_start, discrete_end):
         """
