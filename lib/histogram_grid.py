@@ -89,6 +89,8 @@ class HistogramGrid:
         Returns the certainty of an object being present at the given node
         """
         discrete_x, discrete_y = discrete_point
+        if discrete_x < 0 or discrete_y < 0:
+            return 0
         try:
             return self.histogram_grid[discrete_y][discrete_x]
         except IndexError:

@@ -6,7 +6,7 @@ from geom_util import get_angle_between_points
 
 
 class VFHPathPlanner:
-    def __init__(self, histogram_grid, polar_histogram, l=0, s_max=15, valley_threshold=200):
+    def __init__(self, histogram_grid, polar_histogram, l=5, s_max=15, valley_threshold=200):
         """
         Creates a Polar Histogram object with the number of bins passed.
 
