@@ -101,6 +101,9 @@ def loop_matplotlib_blitting(bike, blitting=True):
     specified filename instead of displaying the animation in a
     window."""
     figure = plt.figure()
+    # figure, (simulation_plot, polar_plot, histogram_grid_plot) = plt.subplots(
+    #     1, 3, figsize=(18, 6))
+
     if hasattr(bike, 'waypoints'):
         axes = plt.axes(**find_display_bounds(bike.waypoints))
     else:
@@ -214,7 +217,10 @@ def loop_matplotlib_blitting(bike, blitting=True):
         # Redraw bike
         figure_blit(axes.bbox)
 
-    # Start the update & refresh timer
+        # Replot polar histogram
+        # plot_polar_histogram()
+
+        # Start the update & refresh timer
     if blitting:
         figure.canvas.new_timer(interval=ANIM_INTERVAL, callbacks=[(full_step, [], {})]).start()
     else:
@@ -222,6 +228,28 @@ def loop_matplotlib_blitting(bike, blitting=True):
 
     # Display the window with the simulation
     plt.show()
+
+
+def plot_polar_histogram():
+    polar_histogram = bike.get_path_planner().get_polar_histogram()
+    num_bins = polar_histogram.num_bins
+    valley_threshold = vfh_path_planner.valley_threshold
+    polar_histogram_by_angle = polar_histogram.get_angle_certainty()
+    # NOTE: instead of sectors, get polar histogram bins and filter them by valley threshold
+    bin_percentages = [1.0/num_bins for _ in range(len(polar_histogram_by_angle))]
+    colors = ['blue' if certainty < valley_threshold else 'red' for _,
+              certainty in polar_histogram_by_angle]
+    labels = [round(np.rad2deg(angle)) for angle, _ in polar_histogram_by_angle]
+    generator = enumerate(polar_histogram_by_angle)
+
+    def make_autopct(bin_percentages):
+        def my_autopct(pct):
+            index, (angle, certainty) = next(generator)
+            return '{certainty:.1f}'.format(certainty=certainty)
+        return my_autopct
+
+    plt.pie(bin_percentages, colors=colors, labels=labels,
+            startangle=0, autopct=make_autopct(bin_percentages))
 
 
 def find_display_bounds(waypoints):

@@ -82,19 +82,17 @@ class HistogramGrid:
         discrete_x, discrete_y = self.continuous_point_to_discrete_point(
             continuous_point)
         # self.histogram_grid[discrete_x][discrete_y] = certainty
-        self.histogram_grid[discrete_y][discrete_x] = certainty
+        if 0 <= discrete_x < self.dimension[0] and 0 < discrete_y < self.dimension[1]:
+            self.histogram_grid[discrete_y][discrete_x] = certainty
 
     def get_certainty_at_discrete_point(self, discrete_point):
         """
         Returns the certainty of an object being present at the given node
         """
         discrete_x, discrete_y = discrete_point
-        if discrete_x < 0 or discrete_y < 0:
+        if not (0 <= discrete_x < self.dimension[0] and 0 < discrete_y < self.dimension[1]):
             return 0
-        try:
-            return self.histogram_grid[discrete_y][discrete_x]
-        except IndexError:
-            return 0
+        return self.histogram_grid[discrete_y][discrete_x]
 
     def get_continuous_distance_between_discrete_points(self, discrete_start, discrete_end):
         """

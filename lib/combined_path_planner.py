@@ -13,6 +13,9 @@ class CombinedPathPlanner():
     def get_polar_histogram(self):
         return self.vfh.get_polar_histogram()
 
+    def get_valley_threshold(self):
+        return self.vfh.valley_threshold
+
     def get_paths(self):
         return self.pp.paths
 
