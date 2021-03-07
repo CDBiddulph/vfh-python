@@ -252,8 +252,8 @@ if __name__ == '__main__':
     polar_histogram = PolarHistogram(36)
 
     waypoints = [(0, 0), (40, 15), (30, 50), (50, 50)]
-    pp_path_planner = PPPathPlanner(waypoints, lookahead_dist=20)
-    vfh_path_planner = VFHPathPlanner(histogram_grid, polar_histogram, valley_threshold=6000)
+    pp_path_planner = PPPathPlanner(waypoints, lookahead_dist=10)
+    vfh_path_planner = VFHPathPlanner(histogram_grid, polar_histogram, valley_threshold=10000)
     combined_path_planner = CombinedPathPlanner(pp_path_planner, vfh_path_planner)
     bike = Bike(combined_path_planner, STARTING_LOC, TARGET_LOC, STARTING_HEADING, dir_lookahead_dist=5)
 
