@@ -2,8 +2,6 @@ import warnings
 import math
 from itertools import groupby
 from operator import itemgetter
-import numpy as np
-from numpy.lib.histograms import histogram
 from geom_util import get_angle_between_points
 
 
@@ -15,7 +13,7 @@ class VFHPathPlanner:
         Args:
             polar_histogram: Object used to store the polar histogram.
             histogram_grid: Object used to store the grid/map of obstacles.
-            a, b, l: Hyperparameters for the smoothing the polar histogram.
+            l: Hyperparameter for smoothing the polar histogram.
             s_max: Hyperparameter: the maximum number of nodes that define a wide valley
         """
         self.polar_histogram = polar_histogram
@@ -27,10 +25,10 @@ class VFHPathPlanner:
         self.calculate_a_and_b()
 
     def calculate_a_and_b(self):
-        # TODO: calculate a and b
-        # d_max = math.sqrt(2) * (self.histogram_grid.dimension)/2
-        self.a = 200
-        self.b = 1
+        d_max = math.sqrt(2) * (self.histogram_grid.active_region_dimension)/2
+        print(d_max)
+        self.a = 100
+        self.b = self.a / d_max
 
     def set_robot_location(self, loc):
         self.robot_location = loc
@@ -46,6 +44,8 @@ class VFHPathPlanner:
         # print("path_planner: generate_histogram: robot_location =", robot_location)
         active_region_min_x, active_region_min_y, active_region_max_x, active_region_max_y = self.histogram_grid.get_active_region(
             robot_location)
+        print(robot_location)
+        print(active_region_min_x, active_region_max_x, active_region_min_y, active_region_max_y)
         # print("path_planner: generate_histogram: active_region =", (active_region_min_x, active_region_min_y, active_region_max_x, active_region_max_y))
         histogram_grid = self.histogram_grid
         polar_histogram = self.polar_histogram
@@ -57,6 +57,7 @@ class VFHPathPlanner:
                 distance = histogram_grid.get_continuous_distance_between_discrete_points(
                     node_considered, robot_location)
                 delta_certainty = (certainty ** 2) * (self.a - self.b * distance)
+                # print(x, y, self.a - self.b * distance)
                 robot_to_node_angle = get_angle_between_points(robot_location, node_considered)
                 # print("path_planner: robot_to_node_angle between robot_location", robot_location,
                 #       "and node_considered", node_considered, "is", robot_to_node_angle)

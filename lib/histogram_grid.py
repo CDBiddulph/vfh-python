@@ -8,7 +8,7 @@ import imageio
 class HistogramGrid:
     def __init__(self, dimension, resolution, active_region_dimension):
         """
-        dimension: Number of cells.
+        dimension: Number of cells on one side.
         resolution: Size of the cell in centimeters.
         """
         # not sure if I should do this
@@ -18,16 +18,13 @@ class HistogramGrid:
         self.resolution = resolution
         ncols, nrows = dimension
         self.histogram_grid = [[0] * ncols for r in range(nrows)]
-        # self.object_grid = [[0] * ncols for i in range(nrows)]
-        # CHANGED: Make Robot class the sole source of truth for location
-        # self.robot_location = robot_location
         self.active_region_dimension = active_region_dimension
 
     @classmethod
     def from_txt_map(cls, map_fname, active_region_dimension, resolution):
         """
         Args:
-            active_region_dimension: a tuple (x, y).
+            active_region_dimension: the number of cells on either side of the active region
         """
         with open(map_fname, 'r') as f:
             reader = csv.reader(f, delimiter=" ")
@@ -109,38 +106,15 @@ class HistogramGrid:
 
     def get_active_region(self, robot_location):
         robot_location_x, robot_location_y = robot_location
-        active_region_x_size, active_region_y_size = self.active_region_dimension
-        x_max, y_max = self.dimension
 
-        active_region_min_x = robot_location_x - active_region_x_size / 2
-        if active_region_min_x < 0:
-            active_region_min_x = 0
-
-        active_region_min_y = robot_location_y - active_region_y_size / 2
-        if active_region_min_y < 0:
-            active_region_min_y = 0
-
-        active_region_max_x = robot_location_x + active_region_x_size / 2
-        # if active_region_max_x >= active_region_x_size:
-        # active_region_max_x = active_region_x_size
-        if active_region_max_x >= x_max:
-            # print("\nactive_region_max_x >= x_max\n")
-            active_region_max_x = x_max
-
-        active_region_max_y = robot_location_y + active_region_y_size / 2
-
-        # if active_region_max_y >= active_region_y_size:
-        #     active_region_max_y = active_region_y_size
-        if active_region_max_y >= y_max:
-            # print("\nactive_region_max_y >= y_max\n")
-            active_region_max_y = y_max
+        active_region_min_x = robot_location_x - self.active_region_dimension / 2
+        active_region_min_y = robot_location_y - self.active_region_dimension / 2
+        active_region_max_x = robot_location_x + self.active_region_dimension / 2
+        active_region_max_y = robot_location_y + self.active_region_dimension / 2
 
         # TODO: is rounding the best way to do this?
-        active_region = (int(round(active_region_min_x)), int(round(active_region_min_y)), int(
+        return (int(round(active_region_min_x)), int(round(active_region_min_y)), int(
             round(active_region_max_x)), int(round(active_region_max_y)))
-
-        # print("histogram_grid: active_region =", active_region)
-        return active_region
 
     # CHANGED: Make Robot class the sole source of truth for location
     # def get_robot_location(self):

@@ -247,12 +247,13 @@ if __name__ == '__main__':
     STARTING_LOC = (0, 0)
     STARTING_HEADING = 0
     TARGET_LOC = (50, 50)
-    histogram_grid = HistogramGrid.from_png_map("maps/map1_s.png", (16, 16), 1)
+
+    histogram_grid = HistogramGrid.from_png_map("maps/map1_s.png", 16, 1)
     polar_histogram = PolarHistogram(36)
 
     waypoints = [(0, 0), (40, 15), (30, 50), (50, 50)]
     pp_path_planner = PPPathPlanner(waypoints, lookahead_dist=20)
-    vfh_path_planner = VFHPathPlanner(histogram_grid, polar_histogram, valley_threshold=5)
+    vfh_path_planner = VFHPathPlanner(histogram_grid, polar_histogram, valley_threshold=6000)
     combined_path_planner = CombinedPathPlanner(pp_path_planner, vfh_path_planner)
     bike = Bike(combined_path_planner, STARTING_LOC, TARGET_LOC, STARTING_HEADING, dir_lookahead_dist=5)
 
