@@ -94,38 +94,66 @@ def loop_matplotlib(bike):
     plt.show()
 
 
+def plot_polar_histogram(ax, to_clear):
+    polar_histogram = bike.get_path_planner().get_polar_histogram()
+    num_bins = polar_histogram.num_bins
+    valley_threshold = vfh_path_planner.valley_threshold
+    polar_histogram_by_angle = polar_histogram.get_angle_certainty()
+    # NOTE: instead of sectors, get polar histogram bins and filter them by valley threshold
+    bin_percentages = [1.0/num_bins for _ in range(len(polar_histogram_by_angle))]
+    colors = ['blue' if certainty < valley_threshold else 'red' for _,
+              certainty in polar_histogram_by_angle]
+    labels = [round(np.rad2deg(angle)) for angle, _ in polar_histogram_by_angle]
+    generator = enumerate(polar_histogram_by_angle)
+
+    def make_autopct(_):
+        def my_autopct(_):
+            _, (_, certainty) = next(generator)
+            return '{certainty:.1f}'.format(certainty=certainty)
+        return my_autopct
+
+    if to_clear:
+        ax.clear()
+
+    ax.pie(
+        bin_percentages, colors=colors, labels=labels, startangle=0, counterclock=True,
+        autopct=make_autopct(bin_percentages))
+
+
 def loop_matplotlib_blitting(bike, blitting=True):
     """This code uses blitting and callbacks to simulate the
     bike. Because so much of the code is shared, this function, when
     provided with the filename argument, will save video to the
     specified filename instead of displaying the animation in a
     window."""
-    figure = plt.figure()
+    figure, (simulation_plot, polar_plot) = plt.subplots(1, 2, figsize=(10, 5))
     # figure, (simulation_plot, polar_plot, histogram_grid_plot) = plt.subplots(
     #     1, 3, figsize=(18, 6))
 
-    if hasattr(bike, 'waypoints'):
-        axes = plt.axes(**find_display_bounds(bike.waypoints))
-    else:
-        right_bound, upper_bound = bike.path_planner.get_histogram_grid().get_real_size()
-        padding = 10
-        axes = plt.axes(xlim=[-padding, right_bound + padding], ylim=[-padding, upper_bound + padding])
+    # if hasattr(bike, 'waypoints'):
+    #     simulation_plot = plt.axes(**find_display_bounds(bike.waypoints))
+    # else:
+    #     right_bound, upper_bound = bike.path_planner.get_histogram_grid().get_real_size()
+    #     padding = 10
+    #     simulation_plot = plt.axes(xlim=[-padding, right_bound + padding], ylim=[-padding, upper_bound + padding])
+    plot_polar_histogram(polar_plot, False)
 
     # Square aspect ratio for the axes
-    axes.set_aspect("equal")
+    simulation_plot.set_aspect("equal")
+    polar_plot.set_aspect("equal")
 
     # Plot paths
     lc = mc.LineCollection(bike.get_paths(), linewidths=2, color="blue")
-    axes.add_collection(lc)
+    simulation_plot.add_collection(lc)
 
     # Plot obstacles
     for x, y, prob in bike.get_obstacles():
-        axes.add_artist(Circle((x, y), radius=0.5, alpha=prob/100))
+        simulation_plot.add_artist(Circle((x, y), radius=0.5, alpha=prob/100))
 
     # Paths and obstacles won't change, so capture them
     figure.canvas.draw()
 
-    background = [figure.canvas.copy_from_bbox(axes.bbox)]
+    background = [figure.canvas.copy_from_bbox(simulation_plot.bbox)]
 
     # Create bike polygon
     bike_heading = bike.heading * (180 / math.pi)  # heading is psi, but in degrees
@@ -134,20 +162,20 @@ def loop_matplotlib_blitting(bike, blitting=True):
     theta2 = bike_heading + wedge_angle / 2 + 180
     bike_polygon = Wedge(bike.pos, 1, theta1, theta2, fc="black")
     bike_polygon.set_zorder(10)
-    axes.add_artist(bike_polygon)
+    simulation_plot.add_artist(bike_polygon)
 
     # Create pure pursuit lookahead point
     pp_lookahead_polygon = Circle((0, 0), radius=0.5, color="r")
     pp_lookahead_polygon.set_zorder(9)
-    axes.add_artist(pp_lookahead_polygon)
+    simulation_plot.add_artist(pp_lookahead_polygon)
 
     # Create lookahead point from low-level direction tracking
     dir_lookahead_polygon = Circle((0, 0), radius=0.5, color="orange")
     dir_lookahead_polygon.set_zorder(9)
-    axes.add_artist(dir_lookahead_polygon)
+    simulation_plot.add_artist(dir_lookahead_polygon)
 
     # Create bike trajectory
-    bike_trajectory_polygon = axes.plot([0, 0], [0, 0], "g")[0]
+    bike_trajectory_polygon = simulation_plot.plot([0, 0], [0, 0], "g")[0]
 
     # Set up trajectory data
     bike_traj_x = [bike.pos[0]]  # Just the x-coords
@@ -177,10 +205,10 @@ def loop_matplotlib_blitting(bike, blitting=True):
 
     def blit():
         figure.canvas.restore_region(background[0])
-        axes.draw_artist(bike_polygon)
-        axes.draw_artist(pp_lookahead_polygon)
-        axes.draw_artist(dir_lookahead_polygon)
-        figure.canvas.blit(axes.bbox)
+        simulation_plot.draw_artist(bike_polygon)
+        simulation_plot.draw_artist(pp_lookahead_polygon)
+        simulation_plot.draw_artist(dir_lookahead_polygon)
+        figure.canvas.blit(simulation_plot.bbox)
 
     listener_id[0] = figure.canvas.mpl_connect("draw_event", grab_background)
 
@@ -197,59 +225,37 @@ def loop_matplotlib_blitting(bike, blitting=True):
         bike_polygon.set(center=bike.pos,
                          theta1=wedge_dir - wedge_angle / 2,
                          theta2=wedge_dir + wedge_angle / 2)
-        axes.draw_artist(bike_polygon)
+        simulation_plot.draw_artist(bike_polygon)
 
         # Update PP lookahead polygon properties and redraw it
         pp_lookahead_polygon.set(center=bike.get_nav_lookahead())
-        axes.draw_artist(pp_lookahead_polygon)
+        simulation_plot.draw_artist(pp_lookahead_polygon)
 
         # Update PP lookahead polygon properties and redraw it
         dir_lookahead_polygon.set(center=bike.get_dir_lookahead())
-        axes.draw_artist(dir_lookahead_polygon)
+        simulation_plot.draw_artist(dir_lookahead_polygon)
 
         # Update trajectory and redraw it
         add_traj_x(bike.pos[0])
         add_traj_y(bike.pos[1])
         bike_trajectory_polygon.set_xdata(bike_traj_x)
         bike_trajectory_polygon.set_ydata(bike_traj_y)
-        axes.draw_artist(bike_trajectory_polygon)
+        simulation_plot.draw_artist(bike_trajectory_polygon)
 
         # Redraw bike
-        figure_blit(axes.bbox)
+        figure_blit(simulation_plot.bbox)
 
-        # Replot polar histogram
-        # plot_polar_histogram()
+        # Plot polar histogram
+        plot_polar_histogram(polar_plot, True)
 
         # Start the update & refresh timer
     if blitting:
         figure.canvas.new_timer(interval=ANIM_INTERVAL, callbacks=[(full_step, [], {})]).start()
     else:
-        ani = animation.FuncAnimation(figure, full_step, frames=xrange(0, 20000))
+        ani = animation.FuncAnimation(figure, full_step, frames=range(0, 20000))
 
     # Display the window with the simulation
     plt.show()
-
-
-def plot_polar_histogram():
-    polar_histogram = bike.get_path_planner().get_polar_histogram()
-    num_bins = polar_histogram.num_bins
-    valley_threshold = vfh_path_planner.valley_threshold
-    polar_histogram_by_angle = polar_histogram.get_angle_certainty()
-    # NOTE: instead of sectors, get polar histogram bins and filter them by valley threshold
-    bin_percentages = [1.0/num_bins for _ in range(len(polar_histogram_by_angle))]
-    colors = ['blue' if certainty < valley_threshold else 'red' for _,
-              certainty in polar_histogram_by_angle]
-    labels = [round(np.rad2deg(angle)) for angle, _ in polar_histogram_by_angle]
-    generator = enumerate(polar_histogram_by_angle)
-
-    def make_autopct(bin_percentages):
-        def my_autopct(pct):
-            index, (angle, certainty) = next(generator)
-            return '{certainty:.1f}'.format(certainty=certainty)
-        return my_autopct
-
-    plt.pie(bin_percentages, colors=colors, labels=labels,
-            startangle=0, autopct=make_autopct(bin_percentages))
 
 
 def find_display_bounds(waypoints):
