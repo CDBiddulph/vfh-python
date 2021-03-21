@@ -94,7 +94,7 @@ def loop_matplotlib(bike):
     plt.show()
 
 
-def plot_polar_histogram(ax, to_clear):
+def plot_polar_histogram(ax):
     polar_histogram = bike.get_path_planner().get_polar_histogram()
     num_bins = polar_histogram.num_bins
     valley_threshold = vfh_path_planner.valley_threshold
@@ -112,8 +112,7 @@ def plot_polar_histogram(ax, to_clear):
             return '{certainty:.1f}'.format(certainty=certainty)
         return my_autopct
 
-    if to_clear:
-        ax.clear()
+    ax.clear()
 
     ax.pie(
         bin_percentages, colors=colors, labels=labels, startangle=0, counterclock=True,
@@ -127,8 +126,6 @@ def loop_matplotlib_blitting(bike, blitting=True):
     specified filename instead of displaying the animation in a
     window."""
     figure, (simulation_plot, polar_plot) = plt.subplots(1, 2, figsize=(10, 5))
-    # figure, (simulation_plot, polar_plot, histogram_grid_plot) = plt.subplots(
-    #     1, 3, figsize=(18, 6))
 
     # if hasattr(bike, 'waypoints'):
     #     simulation_plot = plt.axes(**find_display_bounds(bike.waypoints))
@@ -136,7 +133,6 @@ def loop_matplotlib_blitting(bike, blitting=True):
     #     right_bound, upper_bound = bike.path_planner.get_histogram_grid().get_real_size()
     #     padding = 10
     #     simulation_plot = plt.axes(xlim=[-padding, right_bound + padding], ylim=[-padding, upper_bound + padding])
-    plot_polar_histogram(polar_plot, False)
 
     # Square aspect ratio for the axes
     simulation_plot.set_aspect("equal")
@@ -220,6 +216,9 @@ def loop_matplotlib_blitting(bike, blitting=True):
         figure_restore(background[0])
         bike.step(*bike.get_nav_command())
 
+        # Plot polar histogram
+        plot_polar_histogram(polar_plot)
+
         # Update bike polygon properties and redraw it
         wedge_dir = bike.heading * (180 / math.pi) + 180
         bike_polygon.set(center=bike.pos,
@@ -245,12 +244,9 @@ def loop_matplotlib_blitting(bike, blitting=True):
         # Redraw bike
         figure_blit(simulation_plot.bbox)
 
-        # Plot polar histogram
-        plot_polar_histogram(polar_plot, True)
-
-        # Start the update & refresh timer
+    # Start the update & refresh timer
     if blitting:
-        figure.canvas.new_timer(interval=ANIM_INTERVAL, callbacks=[(full_step, [], {})]).start()
+        timer = figure.canvas.new_timer(interval=ANIM_INTERVAL, callbacks=[(full_step, [], {})]).start()
     else:
         ani = animation.FuncAnimation(figure, full_step, frames=range(0, 20000))
 

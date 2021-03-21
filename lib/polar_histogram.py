@@ -94,7 +94,7 @@ class PolarHistogram:
     def __str__(self):
         string = 'index, angle, certainty\n'
         for i, certainty in enumerate(self._polar_histogram):
-            string += " ".join(str(i), str(i * self.bin_width), str(certainty)) + '\n'
+            string += " ".join((str(i), str(i * self.bin_width), str(certainty))) + '\n'
         return string
 
     def get_angle_certainty(self):
