@@ -97,12 +97,11 @@ def loop_matplotlib(bike):
 def plot_polar_histogram(ax):
     polar_histogram = bike.get_path_planner().get_polar_histogram()
     num_bins = polar_histogram.num_bins
-    valley_threshold = vfh_path_planner.valley_threshold
+    open_bins = polar_histogram.get_open_bins()
     polar_histogram_by_angle = polar_histogram.get_angle_certainty()
     # NOTE: instead of sectors, get polar histogram bins and filter them by valley threshold
     bin_percentages = [1.0/num_bins for _ in range(len(polar_histogram_by_angle))]
-    colors = ['blue' if certainty < valley_threshold else 'red' for _,
-              certainty in polar_histogram_by_angle]
+    colors = ['blue' if i in open_bins else 'red' for i in range(polar_histogram.get_num_bins())]
     labels = [round(np.rad2deg(angle)) for angle, _ in polar_histogram_by_angle]
     generator = enumerate(polar_histogram_by_angle)
 
@@ -217,7 +216,7 @@ def loop_matplotlib_blitting(bike, blitting=True):
         bike.step(*bike.get_nav_command())
 
         # Plot polar histogram
-        plot_polar_histogram(polar_plot)
+        # plot_polar_histogram(polar_plot)
 
         # Update bike polygon properties and redraw it
         wedge_dir = bike.heading * (180 / math.pi) + 180
@@ -274,16 +273,24 @@ def find_display_bounds(waypoints):
 
 
 if __name__ == '__main__':
+    ACTIVE_REGION_DIM = 16
+    RESOLUTION = 1
+
+    histogram_grid = HistogramGrid.from_png_map("maps/map1_s.png", ACTIVE_REGION_DIM, RESOLUTION)
+
+    NUM_POLAR_BINS = 36
+    LOW_VALLEY_THRESHOLD = 10000
+    HIGH_VALLEY_THRESHOLD = 10000
+
+    polar_histogram = PolarHistogram(NUM_POLAR_BINS, LOW_VALLEY_THRESHOLD, HIGH_VALLEY_THRESHOLD)
+
     STARTING_LOC = (0, 0)
     STARTING_HEADING = 0
     TARGET_LOC = (50, 50)
 
-    histogram_grid = HistogramGrid.from_png_map("maps/map1_s.png", 16, 1)
-    polar_histogram = PolarHistogram(36)
-
     waypoints = [(0, 0), (40, 15), (30, 50), (50, 50)]
     pp_path_planner = PPPathPlanner(waypoints, lookahead_dist=10)
-    vfh_path_planner = VFHPathPlanner(histogram_grid, polar_histogram, valley_threshold=10000)
+    vfh_path_planner = VFHPathPlanner(histogram_grid, polar_histogram)
     combined_path_planner = CombinedPathPlanner(pp_path_planner, vfh_path_planner)
     bike = Bike(combined_path_planner, STARTING_LOC, TARGET_LOC, STARTING_HEADING, dir_lookahead_dist=5)
 

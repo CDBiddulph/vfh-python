@@ -6,7 +6,7 @@ from geom_util import get_angle_between_points
 
 
 class VFHPathPlanner:
-    def __init__(self, histogram_grid, polar_histogram, l=5, s_max=15, valley_threshold=200):
+    def __init__(self, histogram_grid, polar_histogram, l=5, s_max=15):
         """
         Creates a Polar Histogram object with the number of bins passed.
 
@@ -20,7 +20,6 @@ class VFHPathPlanner:
         self.histogram_grid = histogram_grid
         self.l = l
         self.s_max = s_max
-        self.valley_threshold = valley_threshold
 
         self.calculate_a_and_b()
 
@@ -68,15 +67,15 @@ class VFHPathPlanner:
         self.generate_histogram(robot_loc)
         robot_to_target_angle = get_angle_between_points(robot_loc, target_loc)
 
-        sectors = self.polar_histogram.get_sectors(self.valley_threshold)
-        num_bins = self.polar_histogram.num_bins
+        sectors = self.polar_histogram.get_sectors()
+        num_bins = self.polar_histogram.get_num_bins()
         bin_width = self.polar_histogram.bin_width
         half_s_max_angle = self.s_max*bin_width/2
         if len(sectors) == 0:
             least_likely_bin = min(range(num_bins), key=lambda k: self.polar_histogram.get(k))
             middle_angle = self.polar_histogram.get_middle_angle_of_bin(least_likely_bin)
-            warnings.warn("path_planner: the entire polar histogram is above valley threshold = %s, setting \
-                best angle to least likely bin middle angle = %s" % (self.valley_threshold, middle_angle))
+            warnings.warn("path_planner: the entire polar histogram is occupied, setting \
+                best angle to least likely bin middle angle = %s" % (middle_angle))
             return middle_angle
 
         angles = []

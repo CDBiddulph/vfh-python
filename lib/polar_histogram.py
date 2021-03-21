@@ -22,7 +22,7 @@ import math
 
 
 class PolarHistogram:
-    def __init__(self, num_bins):
+    def __init__(self, num_bins, low_threshold, high_threshold):
         """
         Creates a Polar Histogram object with the number of bins passed.
 
@@ -34,6 +34,10 @@ class PolarHistogram:
         self.num_bins = num_bins
         self.bin_width = 2*math.pi/num_bins
         self._polar_histogram = [0] * num_bins
+        self.low_threshold = low_threshold
+        self.high_threshold = high_threshold
+
+        self.open_bins = []
 
     def wrap(self, bin_index):
         """Helper method for covering out of bounds bin_index."""
@@ -104,24 +108,35 @@ class PolarHistogram:
     def reset(self):
         self._polar_histogram = [0] * self.num_bins
 
-    def get_filtered(self, valley_threshold):
-        filtered = [bin_index for bin_index, certainty
-                    in enumerate(self._polar_histogram)
-                    if certainty < valley_threshold]
-        return filtered
+    # should only be called once per timestep
+    def recalculate_open_bins(self):
+        result = [bin_index for bin_index, certainty
+                  in enumerate(self._polar_histogram)
+                  if certainty < self.low_threshold]  # or
+        #   (certainty < self.high_threshold and bin_index in self.open_bins)]
+        self.open_bins = result
+        return result
 
-    def get_sectors(self, valley_threshold):
-        filtered_polar_histogram = self.get_filtered(valley_threshold)
+    # like recalculate_open_bins, but doesn't recalculate or depend on the previous results,
+    # can be called multiple times per timestep
+    def get_open_bins(self):
+        return self.open_bins
+
+    def get_num_bins(self):
+        return self.num_bins
+
+    def get_sectors(self):
+        open_bins = self.get_open_bins()
         num_bins = self.num_bins
         # return early if every sector is under or over the threshold
-        if num_bins == len(filtered_polar_histogram):
+        if num_bins == len(open_bins):
             return [(0, num_bins - 1)]
-        elif len(filtered_polar_histogram) == 0:
+        elif len(open_bins) == 0:
             return []
         sectors = []
-        last_bin = start_bin = filtered_polar_histogram[0]
+        last_bin = start_bin = open_bins[0]
 
-        for bin in filtered_polar_histogram[1:]:
+        for bin in open_bins[1:]:
             # if a new bin is starting
             if last_bin + 1 != bin:
                 sectors.append((start_bin, last_bin))
