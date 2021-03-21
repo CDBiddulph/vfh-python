@@ -112,8 +112,8 @@ class PolarHistogram:
     def recalculate_open_bins(self):
         result = [bin_index for bin_index, certainty
                   in enumerate(self._polar_histogram)
-                  if certainty < self.low_threshold]  # or
-        #   (certainty < self.high_threshold and bin_index in self.open_bins)]
+                  if certainty < self.low_threshold or
+                  (certainty < self.high_threshold and bin_index in self.open_bins)]
         self.open_bins = result
         return result
 
@@ -126,7 +126,7 @@ class PolarHistogram:
         return self.num_bins
 
     def get_sectors(self):
-        open_bins = self.get_open_bins()
+        open_bins = self.recalculate_open_bins()
         num_bins = self.num_bins
         # return early if every sector is under or over the threshold
         if num_bins == len(open_bins):
