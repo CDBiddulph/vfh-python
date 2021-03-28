@@ -39,9 +39,12 @@ class PPPathPlanner:
             if path_intersect is not None:
                 lookahead_delta = (lookahead_path_i + path_intersect) - self.lookahead_index
                 if lookahead_delta > 0:
-                    current_path_length = path_length(self.paths[current_path_i])
-                    max_lookahead_i_speed = self.MAX_LOOKAHEAD_SPEED / current_path_length
-                    self.lookahead_index += min(max_lookahead_i_speed, lookahead_delta)
+                    if self.MAX_LOOKAHEAD_SPEED is None:
+                        self.lookahead_index += lookahead_delta
+                    else:
+                        current_path_length = path_length(self.paths[current_path_i])
+                        max_lookahead_i_speed = self.MAX_LOOKAHEAD_SPEED / current_path_length
+                        self.lookahead_index += min(max_lookahead_i_speed, lookahead_delta)
                     break
             lookahead_path_i += 1
 

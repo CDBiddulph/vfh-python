@@ -4,6 +4,8 @@ from itertools import groupby
 from operator import itemgetter
 from geom_util import get_angle_between_points
 
+import numpy as np
+
 
 class VFHPathPlanner:
     def __init__(self, histogram_grid, polar_histogram, l=5, s_max=15):
@@ -111,7 +113,8 @@ class VFHPathPlanner:
                 middle_angle = s_l + (s_r-s_l) / 2
                 angles.append(middle_angle)
 
-        result = min(angles, key=lambda ang: abs(robot_to_target_angle % (2*math.pi) - ang % (2*math.pi)))
+        # print([np.degrees(a) for a in angles])
+        result = min(angles, key=lambda a: angle_distance(a, robot_to_target_angle))
         return result
 
     def print_histogram(self):
@@ -134,3 +137,8 @@ class VFHPathPlanner:
 
     def get_polar_histogram(self):
         return self.polar_histogram
+
+
+# cosine is effective for ranking how different angles are
+def angle_distance(a1, a2):
+    return -math.cos(a1 - a2) + 1

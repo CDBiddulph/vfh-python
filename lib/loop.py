@@ -276,7 +276,7 @@ if __name__ == '__main__':
     ACTIVE_REGION_DIM = 16
     RESOLUTION = 1
 
-    histogram_grid = HistogramGrid.from_png_map("maps/map2_s.png", ACTIVE_REGION_DIM, RESOLUTION)
+    histogram_grid = HistogramGrid.from_png_map("maps/map1_s.png", ACTIVE_REGION_DIM, RESOLUTION)
 
     NUM_POLAR_BINS = 36
     LOW_VALLEY_THRESHOLD = 1000
@@ -288,11 +288,11 @@ if __name__ == '__main__':
     STARTING_HEADING = 0
     TARGET_LOC = (50, 50)
 
-    # waypoints = [(0, 0), (40, 15), (30, 50), (50, 50)]
-    waypoints = [(0, 0), (5, 5), (5, 25), (10, 30), (30, 5), (45, 10), (20, 45), (50, 50)]
-    pp_path_planner = PPPathPlanner(waypoints, lookahead_dist=10, max_lookahead_speed=0.1)
+    waypoints = [(0, 0), (40, 15), (30, 50), (50, 50)]
+    # waypoints = [(0, 0), (5, 5), (5, 25), (10, 30), (30, 5), (45, 10), (20, 45), (50, 50)]
+    pp_path_planner = PPPathPlanner(waypoints, lookahead_dist=10, max_lookahead_speed=None)
     vfh_path_planner = VFHPathPlanner(histogram_grid, polar_histogram)
     combined_path_planner = CombinedPathPlanner(pp_path_planner, vfh_path_planner)
-    bike = Bike(combined_path_planner, STARTING_LOC, TARGET_LOC, STARTING_HEADING, dir_lookahead_dist=20)
+    bike = Bike(combined_path_planner, STARTING_LOC, TARGET_LOC, STARTING_HEADING, dir_lookahead_dist=10)
 
     get_loop_function()(bike)
