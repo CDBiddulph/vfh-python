@@ -6,7 +6,7 @@ SMALL_ANGLE = 0.01
 
 
 class PPPathPlanner:
-    def __init__(self, waypoints, lookahead_dist=10, skip_limit=2):
+    def __init__(self, waypoints, lookahead_dist=10, max_lookahead_speed=0.1):
         """
         x = starting x-coordinate, in m (+x points to the right)
         y = starting y-coordinate, in m (+y points upwards)
@@ -20,8 +20,7 @@ class PPPathPlanner:
         self.lookahead_index = 0
         self.lookahead_point = None
         # how many path segments can be skipped at once
-        self.skip_limit = skip_limit
-
+        self.MAX_LOOKAHEAD_SPEED = max_lookahead_speed
         self.LOOKAHEAD_DIST = lookahead_dist
 
     def waypoint_distances(self):
@@ -33,23 +32,18 @@ class PPPathPlanner:
         return output
 
     def update_lookahead(self, robot_loc):
-        path_i = int(self.lookahead_index)
-        intersect = None
-        # first argument of min ensures no significant skipping on the path
-        while path_i < min(int(self.lookahead_index) + self.skip_limit, len(self.paths)):
-            intersect = self.path_intersect(robot_loc, self.paths[path_i])
-            if intersect is not None:
-                # if it'll end up greater than the old lookahead_index, then add the current path_i to intersect.
-                # otherwise, leave it as None, as if there were no intersect found at all.
-                intersect = intersect + path_i
-                if intersect > self.lookahead_index:
+        lookahead_path_i = current_path_i = int(self.lookahead_index)
+        # first argument of min makes algorithm O(1)
+        while lookahead_path_i < len(self.paths):
+            path_intersect = self.path_intersect(robot_loc, self.paths[lookahead_path_i])
+            if path_intersect is not None:
+                lookahead_delta = (lookahead_path_i + path_intersect) - self.lookahead_index
+                if lookahead_delta > 0:
+                    current_path_length = path_length(self.paths[current_path_i])
+                    max_lookahead_i_speed = self.MAX_LOOKAHEAD_SPEED / current_path_length
+                    self.lookahead_index += min(max_lookahead_i_speed, lookahead_delta)
                     break
-                else:
-                    intersect = None
-            path_i += 1
-        if intersect is not None:
-            self.lookahead_index = intersect
-        # else, leave lookahead_index the same as before
+            lookahead_path_i += 1
 
         # return the point representing the point the robot should follow
         self.lookahead_point = self.lookahead_from_index()
@@ -100,3 +94,8 @@ def init_paths(waypoints):
         for i in range(1, len(waypoints)):
             paths.append((waypoints[i - 1], waypoints[i]))
         return paths
+
+
+def path_length(path):
+    p1, p2 = path[0], path[1]
+    return math.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)

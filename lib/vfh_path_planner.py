@@ -25,7 +25,7 @@ class VFHPathPlanner:
 
     def calculate_a_and_b(self):
         d_max = math.sqrt(2) * (self.histogram_grid.active_region_dimension - 1)/2
-        self.a = 100
+        self.a = 1
         self.b = self.a / d_max
 
     def set_robot_location(self, loc):
