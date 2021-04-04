@@ -82,7 +82,6 @@ class PolarHistogram:
     def add_certainty_to_bin_at_angle(self, angle, delta_certainty):
         """Adds the passed value to the current value of the histogram grid."""
         bin_index = self.get_bin_index_from_angle(angle)
-        # print("polar_histogram: adding certainty %s to bin #%s = %s" % (delta_certainty, bin_index, angle))
         self._polar_histogram[bin_index] += delta_certainty
 
     def smooth_histogram(self, l):
@@ -114,8 +113,9 @@ class PolarHistogram:
                   in enumerate(self._polar_histogram)
                   if certainty < self.low_threshold or
                   (certainty < self.high_threshold and bin_index in self.open_bins)]
-        self.open_bins = result
-        return result
+        self.open_bins_unmasked = result
+        self.open_bins = [bin for bin in result if is_between_angles(
+            self.get_middle_angle_of_bin(bin), self.l_limit, self.r_limit)]
 
     # like recalculate_open_bins, but doesn't recalculate or depend on the previous results,
     # can be called multiple times per timestep
@@ -126,26 +126,57 @@ class PolarHistogram:
         return self.num_bins
 
     def get_sectors(self):
-        open_bins = self.recalculate_open_bins()
-        num_bins = self.num_bins
+        self.recalculate_open_bins()
         # return early if every sector is under or over the threshold
-        if num_bins == len(open_bins):
-            return [(0, num_bins - 1)]
-        elif len(open_bins) == 0:
+        if self.num_bins == len(self.open_bins):
+            return [(0, self.num_bins - 1)]
+        elif len(self.open_bins) == 0:
             return []
         sectors = []
-        last_bin = start_bin = open_bins[0]
+        last_bin = start_bin = self.open_bins[0]
 
-        for bin in open_bins[1:]:
+        for bin in self.open_bins[1:]:
             # if a new bin is starting
             if last_bin + 1 != bin:
                 sectors.append((start_bin, last_bin))
                 start_bin = bin
             last_bin = bin
 
-        if last_bin == num_bins - 1 and sectors and sectors[0][0] == 0:
+        if last_bin == self.num_bins - 1 and sectors and sectors[0][0] == 0:
             sectors[0] = (start_bin, sectors[0][1])
         else:
             sectors.append((start_bin, last_bin))
 
         return sectors
+
+    def mask(self, coords, loc, dir, radius):
+        l_limit = r_limit = dir + math.pi
+        l_traj_cent = (loc[0] + radius*math.cos(dir + math.pi/2),
+                       loc[1] + radius*math.sin(dir + math.pi/2))
+        r_traj_cent = (loc[0] + radius*math.cos(dir - math.pi/2),
+                       loc[1] + radius*math.sin(dir - math.pi/2))
+        sqr_radius = radius ** 2
+        for coord in coords:
+            beta = angle_two_points(loc, coord)
+            if is_between_angles(beta, l_limit, dir) and sqr_dist(l_traj_cent, coord) < sqr_radius:
+                l_limit = beta
+            if is_between_angles(beta, dir, r_limit) and sqr_dist(r_traj_cent, coord) < sqr_radius:
+                r_limit = beta
+
+        self.l_limit, self.r_limit = l_limit, r_limit
+
+
+# is_between_angles returns true if query is hit when you move clockwise from start to end
+def is_between_angles(query, start, end):
+    new_end = end - start + 2*math.pi if end - start < 0 else end - start
+    new_query = query - start + 2*math.pi if query - start < 0 else query - start
+    return new_query <= new_end
+
+
+# returns angle from "from_p" in order to reach "to_p"
+def angle_two_points(from_p, to_p):
+    return math.atan2(to_p[1] - from_p[1], to_p[0] - from_p[0])
+
+
+def sqr_dist(p1, p2):
+    return (p2[0] - p1[0])**2 + (p2[1] - p1[1])**2

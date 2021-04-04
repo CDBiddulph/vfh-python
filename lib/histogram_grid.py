@@ -6,7 +6,7 @@ import imageio
 
 
 class HistogramGrid:
-    def __init__(self, dimension, resolution, active_region_dimension):
+    def __init__(self, dimension, resolution, active_region_dimension, tau=0.1):
         """
         dimension: Number of cells on one side.
         resolution: Size of the cell in centimeters.
@@ -16,9 +16,11 @@ class HistogramGrid:
 
         self.dimension = dimension
         self.resolution = resolution
-        ncols, nrows = dimension
-        self.histogram_grid = [[0] * ncols for r in range(nrows)]
+        self.ncols, self.nrows = dimension
+        self.histogram_grid = [[0] * self.ncols for r in range(self.nrows)]
         self.active_region_dimension = active_region_dimension
+        # threshold over which to count as "blocking" for mask in polar_histogram
+        self.tau = tau
 
     @classmethod
     def from_txt_map(cls, map_fname, active_region_dimension, resolution):
@@ -118,16 +120,16 @@ class HistogramGrid:
         return (int(round(active_region_min_x)), int(round(active_region_min_y)), int(
             round(active_region_max_x)), int(round(active_region_max_y)))
 
-    # CHANGED: Make Robot class the sole source of truth for location
-    # def get_robot_location(self):
-    #     return self.robot_location
+    def get_coordinates_over_tau(self, min_x, max_x, min_y, max_y):
+        result = []
+        for x in range(max(0, min_x), min(self.ncols, max_x)):
+            for y in range(max(0, min_y), min(self.nrows, max_y)):
+                if self.histogram_grid[y][x] > self.tau:
+                    result.append((x, y))
+        return result
 
     def get_target_discrete_location(self):
         return self.target_discrete_location
-
-    # CHANGED: Make Robot class the sole source of truth for location
-    # def set_robot_location(self, robot_location):
-    #     self.robot_location = robot_location
 
     def set_target_discrete_location(self, target_discrete_location):
         self.target_discrete_location = target_discrete_location
@@ -141,7 +143,6 @@ class HistogramGrid:
         for row_idx, row in enumerate(self.histogram_grid):
             for col_idx, cell in enumerate(row):
                 if cell != 0:
-                    # print("histogram_grid: obstacle =", (row_idx, col_idx))
                     obstacles_points_x.append(col_idx)
                     obstacles_points_y.append(row_idx)
                     obstacles_points_prob.append(cell)

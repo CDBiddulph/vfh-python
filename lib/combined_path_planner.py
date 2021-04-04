@@ -3,9 +3,9 @@ class CombinedPathPlanner():
         self.pp = pp_path_planner
         self.vfh = vfh_path_planner
 
-    def get_best_angle(self, robot_loc):
+    def get_best_angle(self, robot_loc, robot_dir):
         self.pp.update_lookahead(robot_loc)
-        return self.vfh.get_best_angle(robot_loc, self.pp.get_lookahead())
+        return self.vfh.get_best_angle(robot_loc, robot_dir, self.pp.get_lookahead())
 
     def get_histogram_grid(self):
         return self.vfh.get_histogram_grid()

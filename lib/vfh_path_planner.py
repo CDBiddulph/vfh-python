@@ -8,7 +8,7 @@ import numpy as np
 
 
 class VFHPathPlanner:
-    def __init__(self, histogram_grid, polar_histogram, l=5, s_max=15):
+    def __init__(self, histogram_grid, polar_histogram, l=5, s_max=15, min_cell_dist=1):
         """
         Creates a Polar Histogram object with the number of bins passed.
 
@@ -22,6 +22,8 @@ class VFHPathPlanner:
         self.histogram_grid = histogram_grid
         self.l = l
         self.s_max = s_max
+        # right now, just used in polar histogram mask
+        self.min_cell_dist = min_cell_dist
 
         self.calculate_a_and_b()
 
@@ -37,37 +39,33 @@ class VFHPathPlanner:
         self.histogram_grid.set_target_discrete_location(
             target_discrete_location)
 
-    def generate_histogram(self, robot_location):
+    def generate_histogram(self, robot_location, robot_direction):
         """Builds the vector field histogram based on current position of robot and surrounding obstacles"""
         self.polar_histogram.reset()
 
-        # print("path_planner: generate_histogram: robot_location =", robot_location)
-        active_region_min_x, active_region_min_y, active_region_max_x, active_region_max_y = self.histogram_grid.get_active_region(
+        ar_min_x, ar_min_y, ar_max_x, ar_max_y = self.histogram_grid.get_active_region(
             robot_location)
-        # print("path_planner: generate_histogram: active_region =", (active_region_min_x, active_region_min_y, active_region_max_x, active_region_max_y))
-        histogram_grid = self.histogram_grid
-        polar_histogram = self.polar_histogram
 
-        for x in range(active_region_min_x, active_region_max_x):
-            for y in range(active_region_min_y, active_region_max_y):
+        for x in range(ar_min_x, ar_max_x):
+            for y in range(ar_min_y, ar_max_y):
                 node_considered = (x, y)
-                certainty = histogram_grid.get_certainty_at_discrete_point(node_considered)
-                distance = histogram_grid.get_continuous_distance_between_discrete_points(
+                certainty = self.histogram_grid.get_certainty_at_discrete_point(node_considered)
+                distance = self.histogram_grid.get_continuous_distance_between_discrete_points(
                     node_considered, robot_location)
                 delta_certainty = (certainty ** 2) * (self.a - self.b * distance)
                 robot_to_node_angle = get_angle_between_points(robot_location, node_considered)
-                # print("path_planner: robot_to_node_angle between robot_location", robot_location,
-                #       "and node_considered", node_considered, "is", robot_to_node_angle)
                 if delta_certainty != 0:
-                    # print("path_planner: adding certainty %.1f to angle %s or node" % (delta_certainty, robot_to_node_angle), node_considered)
-                    polar_histogram.add_certainty_to_bin_at_angle(
+                    self.polar_histogram.add_certainty_to_bin_at_angle(
                         robot_to_node_angle, delta_certainty)
 
-        polar_histogram.smooth_histogram(self.l)
+        self.polar_histogram.smooth_histogram(self.l)
 
-    def get_best_angle(self, robot_loc, target_loc):
-        self.generate_histogram(robot_loc)
-        robot_to_target_angle = get_angle_between_points(robot_loc, target_loc)
+        coords_over_tau = self.histogram_grid.get_coordinates_over_tau(
+            ar_min_x, ar_max_x, ar_min_y, ar_max_y)
+        self.polar_histogram.mask(coords_over_tau, robot_location, robot_direction, self.min_cell_dist)
+
+    def get_best_angle(self, robot_loc, robot_dir, target_loc):
+        self.generate_histogram(robot_loc, robot_dir)
 
         sectors = self.polar_histogram.get_sectors()
         num_bins = self.polar_histogram.get_num_bins()
@@ -80,6 +78,7 @@ class VFHPathPlanner:
                 best angle to least likely bin middle angle = %s" % (middle_angle))
             return middle_angle
 
+        robot_to_target_angle = get_angle_between_points(robot_loc, target_loc)
         angles = []
         for bin_r, bin_l in sectors:
             # counterclockwise from bin_r, you'll hit middle_angle, then bin_l

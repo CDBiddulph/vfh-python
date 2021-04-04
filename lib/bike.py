@@ -38,7 +38,7 @@ class Bike:
     def get_nav_command(self):
         """Returns the pair (speed, yaw_dot)"""
         self.speed = self.MAX_SPEED
-        best_angle = self.path_planner.get_best_angle(self.pos)
+        best_angle = self.path_planner.get_best_angle(self.pos, self.heading)
 
         self.lookahead_point = (self.pos[0] + self.DIR_LOOKAHEAD_DIST * math.cos(best_angle),
                                 self.pos[1] + self.DIR_LOOKAHEAD_DIST * math.sin(best_angle))
