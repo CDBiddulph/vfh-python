@@ -291,7 +291,7 @@ if __name__ == '__main__':
     # waypoints = [(0, 0), (40, 15), (30, 50), (50, 50)]
     waypoints = [(0, 0), (5, 5), (5, 25), (10, 30), (30, 5), (45, 10), (20, 45), (50, 50)]
     pp_path_planner = PPPathPlanner(waypoints, lookahead_dist=10, max_lookahead_speed=None)
-    vfh_path_planner = VFHPathPlanner(histogram_grid, polar_histogram)
+    vfh_path_planner = VFHPathPlanner(histogram_grid, polar_histogram, min_cell_dist=3)
     combined_path_planner = CombinedPathPlanner(pp_path_planner, vfh_path_planner)
     bike = Bike(combined_path_planner, STARTING_LOC, TARGET_LOC, STARTING_HEADING, dir_lookahead_dist=20)
 

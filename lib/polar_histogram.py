@@ -38,6 +38,8 @@ class PolarHistogram:
         self.high_threshold = high_threshold
 
         self.open_bins = []
+        self.open_bins_unmasked = []
+        self.l_limit, self.r_limit = 0, 0
 
     def wrap(self, bin_index):
         """Helper method for covering out of bounds bin_index."""
@@ -117,10 +119,11 @@ class PolarHistogram:
         self.open_bins = [bin for bin in result if is_between_angles(
             self.get_middle_angle_of_bin(bin), self.l_limit, self.r_limit)]
 
-    # like recalculate_open_bins, but doesn't recalculate or depend on the previous results,
-    # can be called multiple times per timestep
     def get_open_bins(self):
         return self.open_bins
+
+    def get_open_bins_unmasked(self):
+        return self.open_bins_unmasked
 
     def get_num_bins(self):
         return self.num_bins
@@ -167,9 +170,10 @@ class PolarHistogram:
 
 
 # is_between_angles returns true if query is hit when you move clockwise from start to end
+# if any two of start, end, or query equal each other, should always be true
 def is_between_angles(query, start, end):
-    new_end = end - start + 2*math.pi if end - start < 0 else end - start
-    new_query = query - start + 2*math.pi if query - start < 0 else query - start
+    new_end = end - start + 2*math.pi if end - start <= 0 else end - start
+    new_query = query - start + 2*math.pi if query - start <= 0 else query - start
     return new_query <= new_end
 
 

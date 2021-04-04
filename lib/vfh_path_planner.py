@@ -8,7 +8,7 @@ import numpy as np
 
 
 class VFHPathPlanner:
-    def __init__(self, histogram_grid, polar_histogram, l=5, s_max=15, min_cell_dist=1):
+    def __init__(self, histogram_grid, polar_histogram, l=5, s_max=15, min_cell_dist=5):
         """
         Creates a Polar Histogram object with the number of bins passed.
 
