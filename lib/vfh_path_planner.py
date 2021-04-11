@@ -8,7 +8,7 @@ import numpy as np
 
 
 class VFHPathPlanner:
-    def __init__(self, histogram_grid, polar_histogram, l=5, s_max=15, min_cell_dist=5):
+    def __init__(self, histogram_grid, polar_histogram, l=5, s_max=15, min_cell_dist=5, angle_cost_weights=(5, 2, 2)):
         """
         Creates a Polar Histogram object with the number of bins passed.
 
@@ -24,8 +24,13 @@ class VFHPathPlanner:
         self.s_max = s_max
         # right now, just used in polar histogram mask
         self.min_cell_dist = min_cell_dist
+        # represent weights for 1) angle from goal, 2) angle from heading,
+        # and 3) angle from last chosen direction
+        self.angle_cost_weights = angle_cost_weights
 
         self.calculate_a_and_b()
+
+        self.last_direction = None
 
     def calculate_a_and_b(self):
         d_max = math.sqrt(2) * (self.histogram_grid.active_region_dimension - 1)/2
@@ -113,8 +118,17 @@ class VFHPathPlanner:
                 angles.append(middle_angle)
 
         # print([np.degrees(a) for a in angles])
-        result = min(angles, key=lambda a: angle_distance(a, robot_to_target_angle))
+        result = min(angles, key=lambda a: self.angle_cost(a, robot_to_target_angle, robot_dir))
+        self.last_direction = result
         return result
+
+    def angle_cost(self, ang, robot_to_target, heading):
+        t1 = self.angle_cost_weights[0]*angle_distance(ang, robot_to_target)
+        t2 = self.angle_cost_weights[1]*angle_distance(ang, heading)
+        # account for the fact that the first timestep will have no last_direction
+        t3 = self.angle_cost_weights[2]*angle_distance(ang, self.last_direction) \
+            if self.last_direction is not None else 0
+        return t1 + t2 + t3
 
     def print_histogram(self):
         print(self.polar_histogram)
