@@ -6,14 +6,13 @@ SMALL_ANGLE = 0.01
 
 
 class Bike:
-    def __init__(self, path_planner, start_pos, target_pos, heading, max_speed=5, yaw_adjust_speed=50, dir_lookahead_dist=25):
+    def __init__(self, path_planner, start_pos, heading, max_speed=5, yaw_adjust_speed=50, dir_lookahead_dist=25):
         """
         x = starting x-coordinate, in m (+x points to the right)
         y = starting y-coordinate, in m (+y points upwards)
         heading = starting header, in radians (0 is +x axis, increases counterclockwise)
         """
         self.pos = start_pos
-        self.target_pos = target_pos
         self.heading = heading
         self.speed = 0
         self.yaw = 0

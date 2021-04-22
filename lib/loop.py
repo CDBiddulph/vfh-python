@@ -273,14 +273,19 @@ def find_display_bounds(waypoints):
 
 
 if __name__ == '__main__':
-    maps = [("maps/map1_s.png", [(0, 0), (40, 15), (30, 50), (50, 50)]),
-            ("maps/map2_s.png", [(0, 0), (5, 5), (5, 25), (10, 30), (30, 5), (45, 10), (20, 45), (50, 50)])]
-    mapi = 1
-
     ACTIVE_REGION_DIM = 16
     RESOLUTION = 1
 
-    histogram_grid = HistogramGrid.from_png_map(maps[mapi][0], ACTIVE_REGION_DIM, RESOLUTION)
+    maps = [("maps/map1_s.png", [(0, 0), (40, 15), (30, 50), (50, 50)], 0),
+            ("maps/map2_s.png", [(0, 0), (5, 5), (5, 25), (10, 30),
+                                 (30, 5), (45, 10), (20, 45), (50, 50)], 0),
+            ("maps/map3_s.png", [(0, 0), (50, 50)], 0),
+            ("maps/masking.png", [(20, 25), (50, 25), (50, 50)], 0)]
+
+    MAP_FILENAME, WAYPOINTS, STARTING_HEADING = maps[3]
+    STARTING_LOC = WAYPOINTS[0]
+
+    histogram_grid = HistogramGrid.from_png_map(MAP_FILENAME, ACTIVE_REGION_DIM, RESOLUTION)
 
     NUM_POLAR_BINS = 36
     LOW_VALLEY_THRESHOLD = 1000
@@ -288,14 +293,9 @@ if __name__ == '__main__':
 
     polar_histogram = PolarHistogram(NUM_POLAR_BINS, LOW_VALLEY_THRESHOLD, HIGH_VALLEY_THRESHOLD)
 
-    STARTING_LOC = (0, 0)
-    STARTING_HEADING = 0
-    TARGET_LOC = (50, 50)
-
-    waypoints = maps[mapi][1]
-    pp_path_planner = PPPathPlanner(waypoints, lookahead_dist=20, max_lookahead_speed=None)
+    pp_path_planner = PPPathPlanner(WAYPOINTS, lookahead_dist=10, max_lookahead_speed=0.15)
     vfh_path_planner = VFHPathPlanner(histogram_grid, polar_histogram, min_cell_dist=3, angle_cost_weights=[5, 2, 2])
     combined_path_planner = CombinedPathPlanner(pp_path_planner, vfh_path_planner)
-    bike = Bike(combined_path_planner, STARTING_LOC, TARGET_LOC, STARTING_HEADING, dir_lookahead_dist=20)
+    bike = Bike(combined_path_planner, STARTING_LOC, STARTING_HEADING, dir_lookahead_dist=20)
 
     get_loop_function()(bike)
