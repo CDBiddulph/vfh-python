@@ -98,10 +98,20 @@ def plot_polar_histogram(ax):
     polar_histogram = bike.get_path_planner().get_polar_histogram()
     num_bins = polar_histogram.num_bins
     open_bins = polar_histogram.get_open_bins()
+    open_bins_unmasked = polar_histogram.get_open_bins_unmasked()
     polar_histogram_by_angle = polar_histogram.get_angle_certainty()
     # NOTE: instead of sectors, get polar histogram bins and filter them by valley threshold
     bin_percentages = [1.0/num_bins for _ in range(len(polar_histogram_by_angle))]
-    colors = ['blue' if i in open_bins else 'red' for i in range(polar_histogram.get_num_bins())]
+
+    def get_color(i):
+        if i in open_bins:
+            return 'blue'
+        elif i in open_bins_unmasked:
+            return 'yellow'
+        else:
+            return 'red'
+
+    colors = [get_color(i) for i in range(polar_histogram.get_num_bins())]
     labels = [round(np.rad2deg(angle)) for angle, _ in polar_histogram_by_angle]
     generator = enumerate(polar_histogram_by_angle)
 
@@ -118,7 +128,7 @@ def plot_polar_histogram(ax):
         autopct=make_autopct(bin_percentages))
 
 
-def loop_matplotlib_blitting(bike, blitting=True):
+def loop_matplotlib_blitting(bike, blitting=True, to_plot_polar_hist=False):
     """This code uses blitting and callbacks to simulate the
     bike. Because so much of the code is shared, this function, when
     provided with the filename argument, will save video to the
@@ -216,7 +226,8 @@ def loop_matplotlib_blitting(bike, blitting=True):
         bike.step(*bike.get_nav_command())
 
         # Plot polar histogram
-        # plot_polar_histogram(polar_plot)
+        if to_plot_polar_hist:
+            plot_polar_histogram(polar_plot)
 
         # Update bike polygon properties and redraw it
         wedge_dir = bike.heading * (180 / math.pi) + 180
@@ -294,8 +305,9 @@ if __name__ == '__main__':
     polar_histogram = PolarHistogram(NUM_POLAR_BINS, LOW_VALLEY_THRESHOLD, HIGH_VALLEY_THRESHOLD)
 
     pp_path_planner = PPPathPlanner(WAYPOINTS, lookahead_dist=10, max_lookahead_speed=0.15)
-    vfh_path_planner = VFHPathPlanner(histogram_grid, polar_histogram, min_cell_dist=3, angle_cost_weights=[5, 2, 2])
+    vfh_path_planner = VFHPathPlanner(histogram_grid, polar_histogram,
+                                      min_cell_dist=5, angle_cost_weights=[5, 2, 2])
     combined_path_planner = CombinedPathPlanner(pp_path_planner, vfh_path_planner)
     bike = Bike(combined_path_planner, STARTING_LOC, STARTING_HEADING, dir_lookahead_dist=20)
 
-    get_loop_function()(bike)
+    get_loop_function()(bike, to_plot_polar_hist=True)

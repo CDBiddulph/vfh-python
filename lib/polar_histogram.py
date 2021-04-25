@@ -19,6 +19,7 @@ but instead translate to and from angle.
 """
 # PolarHistogram class creates an object to represent the Polar Histogram
 import math
+import numpy as np
 
 
 class PolarHistogram:
@@ -171,10 +172,14 @@ class PolarHistogram:
 
 # is_between_angles returns true if query is hit when you move clockwise from start to end
 # if any two of start, end, or query equal each other, should always be true
-def is_between_angles(query, start, end):
-    new_end = end - start + 2*math.pi if end - start <= 0 else end - start
-    new_query = query - start + 2*math.pi if query - start <= 0 else query - start
-    return new_query <= new_end
+def is_between_angles(query, start, end, degrees=False):
+    if degrees:
+        query = np.radians(query)
+        start = np.radians(start)
+        end = np.radians(end)
+    new_end = end - start + 2*math.pi if end - start < 0 else end - start
+    new_query = query - start + 2*math.pi if (query - start) <= 0 else query - start
+    return new_query >= new_end
 
 
 # returns angle from "from_p" in order to reach "to_p"
@@ -184,3 +189,41 @@ def angle_two_points(from_p, to_p):
 
 def sqr_dist(p1, p2):
     return (p2[0] - p1[0])**2 + (p2[1] - p1[1])**2
+
+
+assert(is_between_angles(0, 1, 359, degrees=True))
+assert(is_between_angles(270, 350, 180, degrees=True))
+assert(is_between_angles(270, 0, 180, degrees=True))
+assert(is_between_angles(-90, 0, 180, degrees=True))
+assert(is_between_angles(-90, 0, -180, degrees=True))
+
+'''
+// C code adapted from https://math.stackexchange.com/questions/1044905/simple-angle-between-two-angles-of-circle
+#include <stdio.h>
+
+bool isBetween(float start, float end, float mid) {     
+    end = (end - start) < 0.0f ? end - start + 360.0f : end - start;    
+    mid = (mid - start) <= 0.0f ? mid - start + 360.0f : mid - start; 
+    return (mid >= end); 
+}
+
+int main() {
+    // Write C code here
+    printf("Should be true\n");
+    fputs(isBetween(270, 90, 180) ? "true\n" : "false\n", stdout);
+    fputs(isBetween(0, 358, 359) ? "true\n" : "false\n", stdout);
+    fputs(isBetween(1, 359, 0) ? "true\n" : "false\n", stdout);
+    fputs(isBetween(0, 180, 270) ? "true\n" : "false\n", stdout);
+    fputs(isBetween(0, 0, 270) ? "true\n" : "false\n", stdout);
+    fputs(isBetween(0, 270, 0) ? "true\n" : "false\n", stdout);
+    fputs(isBetween(270, 0, 0) ? "true\n" : "false\n", stdout);
+    fputs(isBetween(0, 0, 0) ? "true\n" : "false\n", stdout);
+    printf("Should be false\n");
+    fputs(isBetween(310, 20, 0) ? "true\n" : "false\n", stdout);
+    fputs(isBetween(270, 90, 0) ? "true\n" : "false\n", stdout);
+    fputs(isBetween(0, 359, 1) ? "true\n" : "false\n", stdout);
+    fputs(isBetween(1, 0, 359) ? "true\n" : "false\n", stdout);
+    
+    return 0;
+}
+'''
