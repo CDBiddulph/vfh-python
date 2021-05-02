@@ -291,7 +291,7 @@ if __name__ == '__main__':
             ("maps/map2_s.png", [(0, 0), (5, 5), (5, 25), (10, 30),
                                  (30, 5), (45, 10), (20, 45), (50, 50)], 0),
             ("maps/map3_s.png", [(0, 0), (50, 50)], 0),
-            ("maps/masking.png", [(20, 25), (50, 25), (50, 50)], 0)]
+            ("maps/masking.png", [(5, 5), (0, 0), (50, 0), (50, 50)], 3*math.pi/2)]
 
     MAP_FILENAME, WAYPOINTS, STARTING_HEADING = maps[3]
     STARTING_LOC = WAYPOINTS[0]
@@ -306,7 +306,7 @@ if __name__ == '__main__':
 
     pp_path_planner = PPPathPlanner(WAYPOINTS, lookahead_dist=10, max_lookahead_speed=0.15)
     vfh_path_planner = VFHPathPlanner(histogram_grid, polar_histogram,
-                                      min_cell_dist=5, angle_cost_weights=[5, 2, 2])
+                                      min_cell_dist=0, angle_cost_weights=[5, 2, 2])
     combined_path_planner = CombinedPathPlanner(pp_path_planner, vfh_path_planner)
     bike = Bike(combined_path_planner, STARTING_LOC, STARTING_HEADING, dir_lookahead_dist=20)
 

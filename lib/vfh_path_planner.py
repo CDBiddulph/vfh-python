@@ -67,6 +67,7 @@ class VFHPathPlanner:
 
         coords_over_tau = self.histogram_grid.get_coordinates_over_tau(
             ar_min_x, ar_max_x, ar_min_y, ar_max_y)
+        print([c for c in coords_over_tau])
         self.polar_histogram.mask(coords_over_tau, robot_location, robot_direction, self.min_cell_dist)
 
     def get_best_angle(self, robot_loc, robot_dir, target_loc):

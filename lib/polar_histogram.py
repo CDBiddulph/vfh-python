@@ -160,14 +160,19 @@ class PolarHistogram:
         r_traj_cent = (loc[0] + radius*math.cos(dir - math.pi/2),
                        loc[1] + radius*math.sin(dir - math.pi/2))
         sqr_radius = radius ** 2
+        # print("dir:", np.degrees(dir))
+        print("loc:", loc)
         for coord in coords:
             beta = angle_two_points(loc, coord)
+            # print(np.degrees(beta))
+            # print(math.sqrt(sqr_dist(l_traj_cent, coord)))
             if is_between_angles(beta, l_limit, dir) and sqr_dist(l_traj_cent, coord) < sqr_radius:
                 l_limit = beta
             if is_between_angles(beta, dir, r_limit) and sqr_dist(r_traj_cent, coord) < sqr_radius:
                 r_limit = beta
 
         self.l_limit, self.r_limit = l_limit, r_limit
+        print(l_limit, r_limit)
 
 
 # is_between_angles returns true if query is hit when you move clockwise from start to end
@@ -177,8 +182,12 @@ def is_between_angles(query, start, end, degrees=False):
         query = np.radians(query)
         start = np.radians(start)
         end = np.radians(end)
-    new_end = end - start + 2*math.pi if end - start < 0 else end - start
-    new_query = query - start + 2*math.pi if (query - start) <= 0 else query - start
+    new_end = end - start + 2*np.pi if end - start < 0 else end - start
+    if np.abs(new_end % (2*np.pi) - np.pi) < 1e-7:
+        # if start and end are almost in opposite directions,
+        # any query should return True
+        return True
+    new_query = query - start + 2*np.pi if (query - start) <= 0 else query - start
     return new_query >= new_end
 
 
